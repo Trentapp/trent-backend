@@ -1,0 +1,24 @@
+{
+  "name": "fairleih-backend",
+  "version": "1.0.0",
+  "description": "Backend of fairleih",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fairleih/fairleih-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Fairleih/fairleih-backend/issues"
+  },
+  "homepage": "https://github.com/Fairleih/fairleih-backend#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.7",
+    "yarn": "^1.22.10"
+  }
+}
