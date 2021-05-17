@@ -1,22 +1,20 @@
-const express = require("express");
-const path = require("path");
+import express from "express"
+import cors from "cors"
+import routes from "./api/routes.js"
+import dotenv from "dotenv"
+
+dotenv.config();
+const port = process.env.PORT || 8000;
 
 const app = express();
-const port = 8000;
 
-app.get("/status", (req,res) => {
-	res.status(200).send("Wenns ankommt ist gut xD");
-});
+app.use(cors());
+app.use(express.json());
 
-app.get("/", (req, res) => {
-	res.send("Hello World!");
-});
-
-
-
+app.use("/api", routes)
+app.use("*", (req, res) => res.status(404).json({error: "Not fount"}));
 
 app.listen(port, () => {
-	console.log("Listening on localhost port ", port);
-});
-
+    console.log("listening on port ", port);
+})
 
