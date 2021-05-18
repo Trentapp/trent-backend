@@ -48,5 +48,33 @@ router.get("/products/product/:productId", async (req,res) => {
     }
 });
 
+//delete a specific product
+router.delete("/products/product/delete/:productId", async (req,res) => {
+    try {
+        const removedPost = await Product.remove({_id: req.params.productId});
+        res.status(200).json({status: "success"});
+    } catch(e) {
+        res.status(500).json({message: e});
+    }
+});
+
+//Update a specific product
+router.patch("/products/product/update/:productId", async (req,res) => {
+    try {
+        const updatedProduct = await Product.updateOne({_id: req.params.productId}, 
+            {$set: {
+                name: req.body.name,
+                desc: req.body.desc,
+                price: {
+                    perHour: req.body.price.perHour,
+                    perDay: req.body.price.perDay,
+                }
+            }});
+        res.status(200).json(updatedProduct);
+    } catch(e) {
+        res.status(500).json({message: e});
+    }
+});
+
 
 export default router;
