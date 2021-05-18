@@ -36,7 +36,7 @@ router.post("/products/create", async (req,res) => {
     } catch(e) {
         res.status(500).json({message:e});
     }
-}),
+});
 
 //get a specific product
 router.get("/products/product/:productId", async (req,res) => {
@@ -46,7 +46,7 @@ router.get("/products/product/:productId", async (req,res) => {
     } catch(e) {
         res.status(500).json({message: e});
     }
-})
+});
 
 
 export default router;
