@@ -59,7 +59,7 @@ router.delete("/products/product/delete/:productId", async (req,res) => {
 });
 
 //Update a specific product
-router.patch("/products/product/update/:productId", async (req,res) => {
+router.patch("/products/product/update/:productId", async (req,res) => { //I should change that one to a put method, as the entire product is updated
     try {
         const updatedProduct = await Product.updateOne({_id: req.params.productId}, 
             {$set: {
