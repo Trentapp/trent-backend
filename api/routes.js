@@ -10,7 +10,7 @@ router.get("/", (req, res) => {
     res.send("Hello World");
 });
 
-//// product stuff
+//// product stuff // Maybe we should rename everything to item instead of product. But we should take care of the database collection and it actually is not that important.
 
 // getting products
 router.get("/products", async (req,res) => {
