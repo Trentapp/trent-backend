@@ -1,6 +1,6 @@
 // we may want to split this routes.js file into multiple route files later
 
-import express from "express"
+import express, { query } from "express"
 import Product from "./models/Product.js"
 
 const router = express.Router();
@@ -13,7 +13,20 @@ router.get("/", (req, res) => {
 //// product stuff // Maybe we should rename everything to item instead of product. But we should take care of the database collection and it actually is not that important.
 
 // getting products
-router.get("/products", async (req,res) => {
+router.get("/products", async (req,res) => { //see if it is called with search parameters: in the query: .../products?name=Name&day_price_max=23
+    let filters = {};//actually we don't need filters here yet, so we can delete it, but later we may want to outsource the data access stuff into another file, so I let it in for now
+    let queryConds = [];
+    if (req.query.name){
+        query.push({ $text: {$search: req.query.name} });
+        filters.name = req.query.name;
+    }
+    if (req.query.day_price_max){
+        //query.push({ price.perDay : })
+        filters.day_price_max = req.query.day_price_max;
+    }
+    if (req.query.hour_price_max){
+        filters.hour_price_max = req.query.hour_price_max;
+    } // add more filter options later, like location, time, ... (maybe min_price xD)
     try {
         const products = await Product.find().limit(10);
         res.status(200).json(products);
@@ -27,7 +40,8 @@ router.post("/products/create", async (req,res) => {
     const product = new Product({
         name: req.body.name,
         desc: req.body.desc,
-        price: req.body.price
+        pricePerHour: req.body.pricePerHour,
+        pricePerDay: req.body.pricePerDay,
     });
 
     try {
@@ -39,7 +53,7 @@ router.post("/products/create", async (req,res) => {
 });
 
 //get a specific product
-router.get("/products/product/:productId", async (req,res) => {
+router.get("/products/product/:productId", async (req,res) => { 
     try {
         const product = await Product.findById(req.params.productId);
         res.status(200).json(product);
@@ -65,10 +79,8 @@ router.patch("/products/product/update/:productId", async (req,res) => { //I sho
             {$set: {
                 name: req.body.name,
                 desc: req.body.desc,
-                price: {
-                    perHour: req.body.price.perHour,
-                    perDay: req.body.price.perDay,
-                }
+                pricePerHour: req.body.pricePerHour,
+                pricePerDay: req.body.pricePerDay,
             }});
         res.status(200).json(updatedProduct);
     } catch(e) {

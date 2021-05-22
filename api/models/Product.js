@@ -10,14 +10,8 @@ const ProductSchema = mongoose.Schema({ //to be extended
         type: String,
         required: true,
     },
-    price: { // At least one of perHour and perDay should be required. See how to do that later.
-        perHour: {
-            type: Number,//saying everything is in € for the beginning
-        },
-        perDay: {
-            type: Number,
-        },
-    }
+    pricePerHour: Number,//saying everything is in € for the beginning
+    pricePerDay: Number,
 });
-
+ProductSchema.index({name: "text"});
 export default mongoose.model("Products", ProductSchema);
