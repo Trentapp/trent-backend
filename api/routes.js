@@ -14,6 +14,10 @@ router.get("/", (req, res) => {
 
 // getting products
 router.get("/products", async (req,res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
+    //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
+    const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 10;
+    const page = req.query.page ? parseInt(req.query.page, 10) : 0;
+
     let filters = {};//actually we don't need filters here yet, so we can delete it, but later we may want to outsource the data access stuff into another file, so I let it in for now
     let queryConds = [{}];
     if (req.query.name){ //the search is raather strict, maybe make it somehow less strict in the future, but I think it is fine for now
@@ -29,7 +33,7 @@ router.get("/products", async (req,res) => { //in the frontend, it should be cal
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like location, time, ... (maybe min_price xD)
     try {
-        const products = await Product.find({$and: queryConds}).exec();
+        const products = await Product.find({$and: queryConds}).skip(productsPerPage*page).limit(productsPerPage).exec();
         res.status(200).json(products);
     } catch(e) {
         res.status(500).json({message: e});
