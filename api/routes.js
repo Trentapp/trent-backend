@@ -13,22 +13,24 @@ router.get("/", (req, res) => {
 //// product stuff // Maybe we should rename everything to item instead of product. But we should take care of the database collection and it actually is not that important.
 
 // getting products
-router.get("/products", async (req,res) => { //see if it is called with search parameters: in the query: .../products?name=Name&day_price_max=23
+router.get("/products", async (req,res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
     let filters = {};//actually we don't need filters here yet, so we can delete it, but later we may want to outsource the data access stuff into another file, so I let it in for now
-    let queryConds = [];
+    let queryConds = [{}];
     if (req.query.name){
-        query.push({ $text: {$search: req.query.name} });
+        queryConds.push({ $text: {$search: req.query.name} });
         filters.name = req.query.name;
     }
     if (req.query.day_price_max){
-        //query.push({ price.perDay : })
+        queryConds.push({ pricePerDay : {$lte: req.query.day_price_max}});
         filters.day_price_max = req.query.day_price_max;
     }
     if (req.query.hour_price_max){
+        queryConds.push({ pricePerHour: {$lte: req.query.hour_price_max}});
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like location, time, ... (maybe min_price xD)
     try {
-        const products = await Product.find().limit(10);
+        console.log(queryConds);
+        const products = await Product.find({$and: queryConds});
         res.status(200).json(products);
     } catch(e) {
         res.status(500).json({message: e});
