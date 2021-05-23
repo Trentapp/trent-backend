@@ -19,7 +19,7 @@ app.get("/", (req,res) => {
     res.send("Yes it works. Access the api with specific calls to /api .");
 });
 
-mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true}, () => console.log("connected to DB!"));
+mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, () => console.log("connected to DB!"));
 
 app.listen(port, () => {
     console.log("listening on port ", port);
