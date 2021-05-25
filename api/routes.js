@@ -47,6 +47,7 @@ router.post("/products/create", async (req,res) => {
         desc: req.body.desc,
         pricePerHour: req.body.pricePerHour,
         pricePerDay: req.body.pricePerDay,
+        address: req.body.address,
     });
 
     try {
