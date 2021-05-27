@@ -22,7 +22,11 @@ const ProductSchema = mongoose.Schema({ //to be extended
     address: {
         type: AddressSchema,
         required: true,
-    }
+    },
+    location: {
+        lat: String,
+        lng: String,
+    },
 });
 ProductSchema.index({name: "text"});
 export default mongoose.model("Products", ProductSchema);
