@@ -24,8 +24,8 @@ const ProductSchema = mongoose.Schema({ //to be extended
         required: true,
     },
     location: {
-        lat: String,
-        lng: String,
+        lat: Number,
+        lng: Number,
     },
 });
 ProductSchema.index({name: "text"});
