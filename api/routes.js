@@ -25,11 +25,11 @@ router.get("/products", async (req,res) => { //in the frontend, it should be cal
         filters.name = req.query.name;
     }
     if (req.query.day_price_max){
-        queryConds.push({ pricePerDay : {$lte: req.query.day_price_max}});
+        queryConds.push({ 'prices.perDay' : {$lte: req.query.day_price_max}});
         filters.day_price_max = req.query.day_price_max;
     }
     if (req.query.hour_price_max){
-        queryConds.push({ pricePerHour: {$lte: req.query.hour_price_max}});
+        queryConds.push({ 'prices.perHour': {$lte: req.query.hour_price_max}});
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like location, time, ... (maybe min_price xD)
     try {
@@ -42,14 +42,7 @@ router.get("/products", async (req,res) => { //in the frontend, it should be cal
 
 // adding a new product
 router.post("/products/create", async (req,res) => {
-    const product = new Product({
-        name: req.body.name,
-        desc: req.body.desc,
-        pricePerHour: req.body.pricePerHour,
-        pricePerDay: req.body.pricePerDay,
-        address: req.body.address,
-        location: req.body.location,
-    });
+    const product = new Product(req.body);
 
     try {
         const savedProduct = await product.save();

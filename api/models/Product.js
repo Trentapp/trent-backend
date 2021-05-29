@@ -17,8 +17,10 @@ const ProductSchema = mongoose.Schema({ //to be extended
         type: String,
         required: true,
     },
-    pricePerHour: Number,//saying everything is in € for the beginning
-    pricePerDay: Number,
+    prices:{
+        perHour: Number,//saying everything is in € for the beginning
+        perDay: Number,
+    },
     address: {
         type: AddressSchema,
         required: true,
