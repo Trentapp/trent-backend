@@ -17,6 +17,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
         type: String,
         required: true,
     },
+    thumbnail: String,
     pictures: {
       type: Array,
       items: {

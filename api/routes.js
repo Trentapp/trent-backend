@@ -61,10 +61,18 @@ const getCoordinates = async (product) => {
     }
 };
 
+// genaerating product thumbnail
+const getThumbnail = async (product) => {
+  if(product['pictures'] == []) { return product }
+  product['thumbnail'] = product['pictures'][0]; //TODO: scaling
+  return product;
+}
+
 router.post("/products/create", async (req,res) => {
     try {
         let product = req.body;
         product = await getCoordinates(product);
+        product = getThumbnail(product);
         const newProduct = await Product.create(product);
         const savedProduct = await newProduct.save();
         res.status(200).json(savedProduct);
@@ -74,7 +82,7 @@ router.post("/products/create", async (req,res) => {
 });
 
 //get a specific product
-router.get("/products/product/:productId", async (req,res) => { 
+router.get("/products/product/:productId", async (req,res) => {
     try {
         const product = await Product.findById(req.params.productId);
         res.status(200).json(product);
