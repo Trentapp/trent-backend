@@ -10,6 +10,7 @@ const AddressSchema = mongoose.Schema({
 
 const ImageSchema = mongoose.Schema({
     data: Buffer,
+    contentType: String,
 });
 
 const ProductSchema = mongoose.Schema({ //to be extended
