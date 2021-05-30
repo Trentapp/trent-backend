@@ -8,6 +8,10 @@ const AddressSchema = mongoose.Schema({
     country: String,
 });
 
+const ImageSchema = mongoose.Schema({
+    data: Buffer,
+});
+
 const ProductSchema = mongoose.Schema({ //to be extended
     name: {
         type: String,
@@ -18,12 +22,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
         required: true,
     },
     thumbnail: String,
-    pictures: {
-      type: Array,
-      items: {
-        type: String
-      }
-    },
+    pictures: [{img: ImageSchema}],
     prices:{
         perHour: Number,//saying everything is in € for the beginning
         perDay: Number,
