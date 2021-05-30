@@ -2,6 +2,15 @@
 
 import express, { query } from "express"
 import Product from "./models/Product.js"
+import NodeGeocoder from "node-geocoder"
+import dotenv from "dotenv"
+
+dotenv.config();
+const options = {
+    provider: "google",
+    apiKey: process.env.GOOGLE_MAPS_API_KEY,
+};
+const geocoder = NodeGeocoder(options);
 
 const router = express.Router();
 
@@ -41,11 +50,23 @@ router.get("/products", async (req,res) => { //in the frontend, it should be cal
 });
 
 // adding a new product
-router.post("/products/create", async (req,res) => {
-    const product = new Product(req.body);
-
+const getCoordinates = async (product) => {
+    //extract the geocoordinates from address and add it to product
     try {
-        const savedProduct = await product.save();
+        const responseLoc = await geocoder.geocode(`${product.address.street} ${product.address.houseNumber}, ${product.address.zipcode} ${product.address.city}, ${product.address.country}`); //may not need to be that detailed
+        product['location'] = {lat: responseLoc[0].latitude, lng: responseLoc[0].longitude};
+        return product;
+    } catch (e) {
+        console.log("Failed to find coordinates of address: ", e);
+    }
+};
+
+router.post("/products/create", async (req,res) => {
+    try {
+        let product = req.body;
+        product = await getCoordinates(product);
+        const newProduct = await Product.create(product);
+        const savedProduct = await newProduct.save();
         res.status(200).json(savedProduct);
     } catch(e) {
         res.status(500).json({message:e});
@@ -75,7 +96,9 @@ router.delete("/products/product/delete/:productId", async (req,res) => {
 //Update a specific product
 router.put("/products/product/update/:productId", async (req,res) => {
     try {
-        await Product.replaceOne({_id: req.params.productId}, req.body);
+        let product = req.body;
+        product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
+        await Product.replaceOne({_id: req.params.productId}, product);
         res.status(200).json({status: "success"}); // maybe rather return the edited product, but Product.replaceOne does not return that.
     } catch(e) {
         res.status(500).json({message: e});
