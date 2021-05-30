@@ -4,6 +4,7 @@ import express, { query } from "express"
 import Product from "./models/Product.js"
 import NodeGeocoder from "node-geocoder"
 import dotenv from "dotenv"
+import sharp from "sharp"
 
 dotenv.config();
 const options = {
@@ -61,11 +62,27 @@ const getCoordinates = async (product) => {
     }
 };
 
-// genaerating product thumbnail
-const getThumbnail = async (product) => {
-  if(product['pictures'] == []) { return product }
-  product['thumbnail'] = product['pictures'][0]; //TODO: scaling
-  return product;
+// generating product thumbnail
+const getThumbnail = (product) => {
+  if(product['pictures'] == undefined) { return product }
+  if(product['pictures'].length === 0) { return product }
+  // return product
+  const image = product['pictures'][0];
+
+  let parts = base64Image.split(';');
+  let mimType = parts[0].split(':')[1];
+  let imageData = parts[1].split(',')[1];
+
+    var img = new Buffer(imageData, 'base64');
+    sharp(img)
+        .resize(64, 64)
+        .toBuffer()
+        .then(resizedImageBuffer => {
+            let resizedImageData = resizedImageBuffer.toString('base64');
+            let resizedBase64 = `data:${mimType};base64,${resizedImageData}`;
+            product['thumbnail'] = resizedBase64
+            return product;
+        })
 }
 
 router.post("/products/create", async (req,res) => {
