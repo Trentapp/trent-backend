@@ -97,8 +97,7 @@ router.post("/products/create", upload.any(), upload.single("product"), async (r
             if (file.fieldname == "product"){
                 product = JSON.parse(fs.readFileSync(file.path).toString());
             } else if (file.fieldname == "image"){
-                const newImage = {data: fs.readFileSync(file.path), contentType: file.mimetype};
-                images.push(newImage);
+                images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
             }
         }
         product.pictures = images;
