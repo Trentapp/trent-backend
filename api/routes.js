@@ -1,10 +1,14 @@
 // we may want to split this routes.js file into multiple route files later
 
 import express, { query } from "express"
-import Product from "./models/Product.js"
+import Product, {Img} from "./models/Product.js"
 import NodeGeocoder from "node-geocoder"
 import dotenv from "dotenv"
 import sharp from "sharp"
+import multer from "multer"
+import fs from "fs"
+
+const upload = multer({dest: "../uploads/"});
 
 dotenv.config();
 const options = {
@@ -85,14 +89,23 @@ const getThumbnail = (product) => {
         })
 }
 
-router.post("/products/create", async (req,res) => {
+router.post("/products/create", upload.any(), upload.single("product"), async (req,res) => {
     try {
-        let product = req.body;
+        const images = [];
+        let product;
+        for (const file of req.files){
+            if (file.fieldname == "product"){
+                product = JSON.parse(fs.readFileSync(file.path).toString());
+            } else if (file.fieldname == "image"){
+                const newImage = {data: fs.readFileSync(file.path), contentType: file.mimetype};
+                images.push(newImage);
+            }
+        }
+        product.pictures = images;
         product = await getCoordinates(product);
-        product = getThumbnail(product);
+        //product = getThumbnail(product);
         const newProduct = await Product.create(product);
-        const savedProduct = await newProduct.save();
-        res.status(200).json(savedProduct);
+        res.status(200).json(newProduct);
     } catch(e) {
         res.status(500).json({message:e});
     }

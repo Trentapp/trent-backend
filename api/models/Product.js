@@ -38,4 +38,5 @@ const ProductSchema = mongoose.Schema({ //to be extended
     },
 });
 ProductSchema.index({name: "text"});
+export const Img = mongoose.model("Img",ImageSchema);
 export default mongoose.model("Products", ProductSchema);
