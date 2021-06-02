@@ -89,7 +89,7 @@ router.post("/products/create", async (req,res) => {
     try {
         let product = req.body;
         product = await getCoordinates(product);
-        product = getThumbnail(product);
+        // product = getThumbnail(product);
         const newProduct = await Product.create(product);
         const savedProduct = await newProduct.save();
         res.status(200).json(savedProduct);

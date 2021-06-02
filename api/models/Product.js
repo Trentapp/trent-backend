@@ -18,12 +18,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
         required: true,
     },
     thumbnail: String,
-    pictures: {
-      type: Array,
-      items: {
-        type: String
-      }
-    },
+    pictures: [String],
     prices:{
         perHour: Number,//saying everything is in € for the beginning
         perDay: Number,
@@ -35,7 +30,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
     location: {
         lat: Number,
         lng: Number,
-    },
+    }
 });
 ProductSchema.index({name: "text"});
 export default mongoose.model("Products", ProductSchema);
