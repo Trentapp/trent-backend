@@ -2,6 +2,7 @@
 
 import express, { query } from "express"
 import Product from "./models/Product.js"
+import User from "./models/User.js"
 import NodeGeocoder from "node-geocoder"
 import dotenv from "dotenv"
 import sharp from "sharp"
@@ -87,12 +88,17 @@ const getThumbnail = (product) => {
 
 router.post("/products/create", async (req,res) => {
     try {
-        let product = req.body;
+        let product = req.body.product;
         product = await getCoordinates(product);
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
         const savedProduct = await newProduct.save();
-        res.status(200).json(savedProduct);
+
+        const user = await User.find({ uid: req.body.uid});
+        user[0].inventory.push(savedProduct._id)
+        await User.replaceOne({ _id: user[0]._id}, user[0]);
+
+        res.status(200).json({status: "success"});
     } catch(e) {
         res.status(500).json({message:e});
     }
@@ -128,6 +134,16 @@ router.put("/products/product/update/:productId", async (req,res) => {
     } catch(e) {
         res.status(500).json({message: e});
     }
+});
+
+// get private profile
+router.get("/users/user/:id", async (req, res) => {
+  try {
+      const user = await User.find({ uid: req.params.id});;
+      res.status(200).json(user[0]);
+  } catch(e) {
+      res.status(500).json({message: e});
+  }
 });
 
 

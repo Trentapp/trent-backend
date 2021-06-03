@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api", routes)
-app.use("*", (req, res) => res.status(404).json({error: "Not fount"}));
+app.use("*", (req, res) => res.status(404).json({error: "Not found"}));
 
 app.get("/", (req,res) => {
     res.send("Yes it works. Access the api with specific calls to /api .");
@@ -24,4 +24,3 @@ mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTop
 app.listen(port, () => {
     console.log("listening on port ", port);
 });
-
