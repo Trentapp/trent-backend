@@ -6,10 +6,6 @@ const UserSchema = mongoose.Schema({ //to be extended
       type: String,
       required: true
     },
-    uid: {
-      type: String,
-      required: true
-    },
     name: {
         type: String,
         required: true

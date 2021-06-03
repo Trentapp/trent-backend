@@ -136,6 +136,20 @@ router.put("/products/product/update/:productId", async (req,res) => {
     }
 });
 
+// create user profile
+router.post("/users/create", async (req,res) => {
+    try {
+        let user = req.body.user;
+        const newUser = await User.create(user);
+        newUser["inventory"] = []
+        const savedUser = await newUser.save();
+
+        res.status(200).json({status: "success"});
+    } catch(e) {
+        res.status(500).json({message:e});
+    }
+});
+
 // get private profile
 router.get("/users/user/:id", async (req, res) => {
   try {
