@@ -139,8 +139,7 @@ router.put("/products/product/update/:productId", async (req,res) => {
 router.post("/users/create", async (req,res) => {
     try {
         let user = req.body.user; //I would submit the user data in the request directly, so the new req.body is the old req.body.user
-        const newUser = await User.create(user);
-        newUser["inventory"] = []; // I think that does not update the user, just the object you have here in javascript (use updateOne to update it in mongoDB)
+        const newUser = await User.create({...user, inventory: []});
         res.status(200).json({status: "success"});
     } catch(e) {
         res.status(500).json({message:e});
