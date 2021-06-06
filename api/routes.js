@@ -88,13 +88,13 @@ const getThumbnail = (product) => {
 
 router.post("/products/create", async (req,res) => {
     try {
-        let product = req.body.product;
+        let product = req.body.product; // I would add uid to product before making the request and pass the product directly as req.body
         product = await getCoordinates(product);
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
 
         const user = await User.findOne({ uid: req.body.uid});
-        user.inventory.push(newProduct._id)
+        user.inventory.push(newProduct._id);
         await User.replaceOne({ _id: user._id}, user);
 
         res.status(200).json({status: "success", productId: newProduct._id});
@@ -138,11 +138,9 @@ router.put("/products/product/update/:productId", async (req,res) => {
 // create user profile
 router.post("/users/create", async (req,res) => {
     try {
-        let user = req.body.user;
+        let user = req.body.user; //I would submit the user data in the request directly, so the new req.body is the old req.body.user
         const newUser = await User.create(user);
-        newUser["inventory"] = []
-        const savedUser = await newUser.save();
-
+        newUser["inventory"] = []; // I think that does not update the user, just the object you have here in javascript (use updateOne to update it in mongoDB)
         res.status(200).json({status: "success"});
     } catch(e) {
         res.status(500).json({message:e});

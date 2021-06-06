@@ -30,7 +30,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
     location: {
         lat: Number,
         lng: Number,
-    }
+    }//todo: add userId
 });
 ProductSchema.index({name: "text"});
 export default mongoose.model("Products", ProductSchema);

@@ -10,7 +10,7 @@ const UserSchema = mongoose.Schema({ //to be extended
         type: String,
         required: true
     },
-    mail: String,
+    mail: String,//I would use email instead of mail
     //picture: String,
     address: AddressSchema,
     inventory: [String] // I think actually you we should do it like: inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Products"}]
