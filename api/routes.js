@@ -92,13 +92,12 @@ router.post("/products/create", async (req,res) => {
         product = await getCoordinates(product);
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
-        const savedProduct = await newProduct.save();
 
-        const user = await User.find({ uid: req.body.uid});
-        user[0].inventory.push(savedProduct._id)
-        await User.replaceOne({ _id: user[0]._id}, user[0]);
+        const user = await User.findOne({ uid: req.body.uid});
+        user.inventory.push(newProduct._id)
+        await User.replaceOne({ _id: user._id}, user);
 
-        res.status(200).json({status: "success"});
+        res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
         res.status(500).json({message:e});
     }
@@ -153,8 +152,8 @@ router.post("/users/create", async (req,res) => {
 // get private profile
 router.get("/users/user/:id", async (req, res) => {
   try {
-      const user = await User.find({ uid: req.params.id});;
-      res.status(200).json(user[0]);
+      const user = await User.findOne({ uid: req.params.id});;
+      res.status(200).json(user);
   } catch(e) {
       res.status(500).json({message: e});
   }

@@ -13,7 +13,7 @@ const UserSchema = mongoose.Schema({ //to be extended
     mail: String,
     //picture: String,
     address: AddressSchema,
-    inventory: [String]
+    inventory: [String] // I think actually you we should do it like: inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Products"}]
 });
 
 UserSchema.index({name: "text"});
