@@ -157,5 +157,15 @@ router.get("/users/user/:id", async (req, res) => {
   }
 });
 
+// update user
+router.put("users/update/:uid", async (req, res) => {
+    try {
+        await User.replaceOne({uid: req.params.uid}, req.body);
+        res.status(200).json({status: "success"});
+    } catch(e) {
+        res.status(500).json({message: e});
+    }
+})
+
 
 export default router;
