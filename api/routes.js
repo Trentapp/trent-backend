@@ -93,10 +93,10 @@ router.post("/products/create", async (req,res) => {
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
 
-        // I think we can simplify the following three lines with User.updateOne()
-        const user = await User.findOne({ uid: req.body.uid});
-        user.inventory.push(newProduct._id);
-        await User.replaceOne({ _id: user._id}, user);
+        await User.updateOne({ uid: req.body.uid}, {$push: {inventory: newProduct._id}}); // This line should replace the three lines below, but it is not tested yet
+        // const user = await User.findOne({ uid: req.body.uid});
+        // user.inventory.push(newProduct._id);
+        // await User.replaceOne({ _id: user._id}, user);
 
         res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
