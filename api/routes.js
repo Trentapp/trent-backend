@@ -93,7 +93,7 @@ router.post("/products/create", async (req,res) => {
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
 
-        await User.updateOne({ uid: req.body.uid}, {$push: {inventory: newProduct._id}}); // This line should replace the three lines below, but it is not tested yet
+        await User.updateOne({ uid: req.body.uid}, {$push: {inventory: newProduct._id}}); // This line should replace the three lines below, but it is not tested yet // I think it worked, but maybe test again
         // const user = await User.findOne({ uid: req.body.uid});
         // user.inventory.push(newProduct._id);
         // await User.replaceOne({ _id: user._id}, user);
@@ -158,14 +158,14 @@ router.get("/users/user/:id", async (req, res) => {
 });
 
 // update user
-router.put("users/update/:uid", async (req, res) => {
+router.put("/users/update/:uid", async (req, res) => {
     try {
         await User.replaceOne({uid: req.params.uid}, req.body);
         res.status(200).json({status: "success"});
     } catch(e) {
         res.status(500).json({message: e});
     }
-})
+});
 
 
 export default router;
