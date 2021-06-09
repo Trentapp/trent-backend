@@ -84,6 +84,7 @@ const getThumbnail = (product) => {
 productsRouter.post("/create", async (req,res) => {
     try {
         let product = req.body.product; // I would add uid to product before making the request and pass the product directly as req.body
+        //please make sure that req.body.product already contains the uid, so it is also added to product.
         product = await getCoordinates(product);
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
