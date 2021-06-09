@@ -1,11 +1,10 @@
-// we may want to split this routes.js file into multiple route files later
-
-import express, { query } from "express"
-import Product from "./models/Product.js"
-import User from "./models/User.js"
+import express from "express"
 import NodeGeocoder from "node-geocoder"
 import dotenv from "dotenv"
 import sharp from "sharp"
+
+import Product from "../models/Product.js"
+import User from "../models/User.js"
 
 dotenv.config();
 const options = {
@@ -14,17 +13,13 @@ const options = {
 };
 const geocoder = NodeGeocoder(options);
 
-const router = express.Router();
-
-//just main message for testing
-router.get("/", (req, res) => {
-    res.send("Hello World");
-});
+const productsRouter = express.Router();
 
 //// product stuff // Maybe we should rename everything to item instead of product. But we should take care of the database collection and it actually is not that important.
 
+// the default prefix of every route in that file is /api/products
 // getting products
-router.get("/products", async (req,res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
+productsRouter.get("/", async (req,res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
     const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 10;
     const page = req.query.page ? parseInt(req.query.page, 10) : 0;
@@ -86,17 +81,14 @@ const getThumbnail = (product) => {
         })
 }
 
-router.post("/products/create", async (req,res) => {
+productsRouter.post("/create", async (req,res) => {
     try {
         let product = req.body.product; // I would add uid to product before making the request and pass the product directly as req.body
         product = await getCoordinates(product);
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
 
-        await User.updateOne({ uid: req.body.uid}, {$push: {inventory: newProduct._id}}); // This line should replace the three lines below, but it is not tested yet // I think it worked, but maybe test again
-        // const user = await User.findOne({ uid: req.body.uid});
-        // user.inventory.push(newProduct._id);
-        // await User.replaceOne({ _id: user._id}, user);
+        await User.updateOne({ uid: req.body.uid}, {$push: {inventory: newProduct._id}});
 
         res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
@@ -105,7 +97,7 @@ router.post("/products/create", async (req,res) => {
 });
 
 //get a specific product
-router.get("/products/product/:productId", async (req,res) => {
+productsRouter.get("/product/:productId", async (req,res) => {
     try {
         const product = await Product.findById(req.params.productId);
         res.status(200).json(product);
@@ -115,7 +107,7 @@ router.get("/products/product/:productId", async (req,res) => {
 });
 
 //delete a specific product
-router.delete("/products/product/delete/:productId", async (req,res) => {
+productsRouter.delete("/product/delete/:productId", async (req,res) => {
     try {
         const removedPost = await Product.deleteOne({_id: req.params.productId});
         res.status(200).json({status: "success"});
@@ -125,7 +117,7 @@ router.delete("/products/product/delete/:productId", async (req,res) => {
 });
 
 //Update a specific product
-router.put("/products/product/update/:productId", async (req,res) => {
+productsRouter.put("/product/update/:productId", async (req,res) => {
     try {
         let product = req.body;
         product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
@@ -136,36 +128,4 @@ router.put("/products/product/update/:productId", async (req,res) => {
     }
 });
 
-// create user profile
-router.post("/users/create", async (req,res) => {
-    try {
-        let user = req.body.user; //I would submit the user data in the request directly, so the new req.body is the old req.body.user
-        const newUser = await User.create({...user, inventory: []}); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
-        res.status(200).json({status: "success"});
-    } catch(e) {
-        res.status(500).json({message:e});
-    }
-});
-
-// get private profile
-router.get("/users/user/:id", async (req, res) => {
-  try {
-      const user = await User.findOne({ uid: req.params.id});
-      res.status(200).json(user);
-  } catch(e) {
-      res.status(500).json({message: e});
-  }
-});
-
-// update user
-router.put("/users/update/:uid", async (req, res) => {
-    try {
-        await User.replaceOne({uid: req.params.uid}, req.body);
-        res.status(200).json({status: "success"});
-    } catch(e) {
-        res.status(500).json({message: e});
-    }
-});
-
-
-export default router;
+export default productsRouter;

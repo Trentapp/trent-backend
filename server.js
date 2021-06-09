@@ -1,6 +1,6 @@
 import express from "express"
 import cors from "cors"
-import routes from "./api/routes.js"
+import routes from "./api/metaRoutes.js"
 import dotenv from "dotenv"
 import mongoose from "mongoose"
 
