@@ -113,7 +113,7 @@ productsRouter.get("/product/:productId", async (req,res) => {
 //delete a specific product
 productsRouter.delete("/product/delete/:productId", async (req,res) => {
     try {
-        const removedPost = await Product.deleteOne({_id: req.params.productId});
+        await Product.deleteOne({_id: req.params.productId});
         res.status(200).json({status: "success"});
     } catch(e) {
         res.status(500).json({message: e});

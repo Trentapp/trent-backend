@@ -1,5 +1,6 @@
 import express from "express"
 import User from "../models/User.js"
+import Product from "../models/Product.js"
 
 const userRouter = express.Router();
 
@@ -35,5 +36,15 @@ userRouter.put("/update/:uid", async (req, res) => {
         res.status(500).json({message: e});
     }
 });
+
+userRouter.delete("/delete/:uid", async (req, res) => {
+    try {
+        await Product.deleteMany({uid: req.params.uid});//deletes all products of that user
+        await User.deleteOne({uid: req.params.uid});
+        res.status(200).json({message: "success"});
+    } catch (e) {
+        res.status(500).json({message: e});
+    }
+})
 
 export default userRouter;
