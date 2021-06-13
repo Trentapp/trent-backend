@@ -38,6 +38,9 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         queryConds.push({ 'prices.perHour': {$lte: req.query.hour_price_max}});
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like location, time, ... (maybe min_price xD)
+    if (req.query.inventory_uid){
+        queryConds.push({uid: req.query.inventory_uid});
+    }
     try {
         const products = await Product.find({$and: queryConds}).skip(productsPerPage*page).limit(productsPerPage);
         res.status(200).json(products);
