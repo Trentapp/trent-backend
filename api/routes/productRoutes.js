@@ -38,7 +38,7 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         queryConds.push({ 'prices.perHour': {$lte: req.query.hour_price_max}});
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like location, time, ... (maybe min_price xD)
-    if (req.query.inventory_uid){
+    if (req.query.inventory_uid){ //alternative: go through user.inventory (I think it is not that much more efficient)
         queryConds.push({uid: req.query.inventory_uid});
     }
     try {
@@ -113,6 +113,8 @@ productsRouter.get("/product/:productId", async (req,res) => {
 //delete a specific product
 productsRouter.delete("/product/delete/:productId", async (req,res) => {
     try {
+        const product = await Product.findById(req.params.productId);
+        await User.updateOne({uid: product.uid}, {$pullAll: {inventory: [req.params.productId]}});
         await Product.deleteOne({_id: req.params.productId});
         res.status(200).json({status: "success"});
     } catch(e) {
