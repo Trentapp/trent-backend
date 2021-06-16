@@ -20,13 +20,22 @@ reviewRouter.post("/create", async (req,res) => {
 
 // I don't think there will be a individual review page in the frontend, though get may still be important for standard entries when updating
 reviewRouter.get("/review/:id", async (req, res) => {
-  try {
-      const review = await Review.findOne({ _id: req.params.id});
-      res.status(200).json(review);
-  } catch(e) {
-      res.status(500).json({message: e});
-  }
+    try {
+        const review = await Review.findOne({ _id: req.params.id});
+        res.status(200).json(review);
+    } catch(e) {
+        res.status(500).json({message: e});
+    }
 });
+
+reviewRouter.get("/user/:uid", async (req, res) => {
+    try {
+        const reviews = await Review.find({ ratedUserId: req.params.uid});
+        res.status(200).json(reviews);
+    } catch(e) {
+        res.status(500).json({message: e});
+    }
+})
 
 // update review
 reviewRouter.put("/update/:id", async (req, res) => {
