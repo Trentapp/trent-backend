@@ -45,7 +45,7 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         queryConds.push({uid: req.query.inventory_uid});
     }
     try {
-        // const products = await Product.find({$and: queryConds}).skip(productsPerPage*page).limit(productsPerPage);{location: {$geoWithin: { $centerSphere: [ [ 8.68076607419591, 49.406925201581174 ], 0.00003558286813548655 ]}}}
+        const products = await Product.find({$and: queryConds}).skip(productsPerPage*page).limit(productsPerPage);
         res.status(200).json(products);
     } catch(e) {
         res.status(500).json({message: e});
