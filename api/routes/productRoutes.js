@@ -30,6 +30,9 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         queryConds.push({ $text: {$search: req.query.name} });
         filters.name = req.query.name;
     }
+    if(req.query.lat && req.query.lng){
+      queryConds.push({location: {$geoWithin: { $centerSphere: [ [ req.query.lng, req.query.lat ], 0.0005 ]}}})
+    }
     if (req.query.day_price_max){
         queryConds.push({ 'prices.perDay' : {$lte: req.query.day_price_max}});
         filters.day_price_max = req.query.day_price_max;
@@ -42,7 +45,7 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         queryConds.push({uid: req.query.inventory_uid});
     }
     try {
-        const products = await Product.find({$and: queryConds}).skip(productsPerPage*page).limit(productsPerPage);
+        // const products = await Product.find({$and: queryConds}).skip(productsPerPage*page).limit(productsPerPage);{location: {$geoWithin: { $centerSphere: [ [ 8.68076607419591, 49.406925201581174 ], 0.00003558286813548655 ]}}}
         res.status(200).json(products);
     } catch(e) {
         res.status(500).json({message: e});
