@@ -49,7 +49,7 @@ reviewRouter.put("/update/:id", async (req, res) => {
 
 reviewRouter.delete("/delete/:id", async (req, res) => {
     try {
-        await User.deleteOne({_id: req.params.id});
+        await Review.deleteOne({_id: req.params.id});
         res.status(200).json({message: "success"});
     } catch (e) {
         res.status(500).json({message: e});
