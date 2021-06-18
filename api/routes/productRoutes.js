@@ -30,6 +30,9 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         queryConds.push({ $text: {$search: req.query.name} });
         filters.name = req.query.name;
     }
+    if(req.query.lat && req.query.lng){
+      queryConds.push({location: {$geoWithin: { $centerSphere: [ [ req.query.lng, req.query.lat ], 0.0005 ]}}})
+    }
     if (req.query.day_price_max){
         queryConds.push({ 'prices.perDay' : {$lte: req.query.day_price_max}});
         filters.day_price_max = req.query.day_price_max;
