@@ -31,7 +31,7 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         filters.name = req.query.name;
     }
     if(req.query.lat && req.query.lng){
-      queryConds.push({location: {$geoWithin: { $centerSphere: [ [ req.query.lng, req.query.lat ], 0.0005 ]}}})
+      queryConds.push({location: {$geoWithin: { $centerSphere: [ [ req.query.lng, req.query.lat ], 0.0005 ]}}}) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
     }
     if (req.query.day_price_max){
         queryConds.push({ 'prices.perDay' : {$lte: req.query.day_price_max}});
@@ -45,7 +45,7 @@ productsRouter.get("/", async (req,res) => { //in the frontend, it should be cal
         queryConds.push({uid: req.query.inventory_uid});
     }
     try {
-        const products = await Product.find({$and: queryConds}).skip(productsPerPage*page).limit(productsPerPage);
+        const products = await Product.find({$and: queryConds});//.skip(productsPerPage*page).limit(productsPerPage);
         res.status(200).json(products);
     } catch(e) {
         res.status(500).json({message: e});
@@ -91,11 +91,21 @@ productsRouter.post("/create", async (req,res) => {
     try {
         let product = req.body.product; // I would add uid to product before making the request and pass the product directly as req.body
         //please make sure that req.body.product already contains the uid, so it is also added to product.
+        if(!req.body.user_uid) { throw "No user uid" }
+        const user_result = await User.find({uid: req.body.user_uid});
+        const user = user_result[0];
+        const user_id = user._id;
+        console.log(user_id);
+        if(!user_id) { throw "User uid not found" }
+
+
+
         product = await getCoordinates(product);
+        product["user_id"] = user_id;
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
 
-        await User.updateOne({ uid: req.body.uid}, {$push: {inventory: newProduct._id}});
+        await User.updateOne({ _id: user_id}, {$push: {inventory: newProduct._id}});
 
         res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
@@ -117,7 +127,7 @@ productsRouter.get("/product/:productId", async (req,res) => {
 productsRouter.delete("/product/delete/:productId", async (req,res) => {
     try {
         const product = await Product.findById(req.params.productId);
-        await User.updateOne({uid: product.uid}, {$pullAll: {inventory: [req.params.productId]}});
+        await User.updateOne({_id: product.user_id}, {$pullAll: {inventory: [req.params.productId]}});
         await Product.deleteOne({_id: req.params.productId});
         res.status(200).json({status: "success"});
     } catch(e) {

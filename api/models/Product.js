@@ -29,7 +29,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
         type: AddressSchema,
         required: true
     },
-    uid: String,
+    user_id: String,
     thumbnail: String,
     pictures: [String]
 });
