@@ -57,7 +57,7 @@ const getCoordinates = async (product) => {
     //extract the geocoordinates from address and add it to product
     try {
         const responseLoc = await geocoder.geocode(`${product.address.street} ${product.address.houseNumber}, ${product.address.zipcode} ${product.address.city}, ${product.address.country}`); //may not need to be that detailed
-        product['location'] = {lat: responseLoc[0].latitude, lng: responseLoc[0].longitude};
+        product['location.coordinates'] = [responseLoc[0].longitude, responseLoc[0].latitude];
         return product;
     } catch (e) {
         console.log("Failed to find coordinates of address: ", e);
