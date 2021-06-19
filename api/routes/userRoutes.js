@@ -28,19 +28,27 @@ userRouter.get("/user/:id", async (req, res) => {
 });
 
 // update user
-userRouter.put("/update/:uid", async (req, res) => {
+userRouter.put("/update", async (req, res) => {
     try {
-        await User.replaceOne({uid: req.params.uid}, req.body);
-        res.status(200).json({status: "success"});
+      const updatedUser = req.body.user;
+
+      const user = await User.findOne({uid: updatedUser.uid});
+
+      updatedUser["_id"] = user._id;
+      updatedUser["inventory"] = user.inventory;
+      updatedUser["mail"] = user.mail;
+
+      await User.replaceOne({uid: req.body.user.uid}, req.body.user);
+      res.status(200).json({status: "success"});
     } catch(e) {
-        res.status(500).json({message: e});
+      res.status(500).json({message: e});
     }
 });
 
-userRouter.delete("/delete/:uid", async (req, res) => {
+userRouter.delete("/delete", async (req, res) => {
     try {
-        await Product.deleteMany({uid: req.params.uid});//deletes all products of that user
-        await User.deleteOne({uid: req.params.uid});
+        await Product.deleteMany({user_id: req.body.uid});//deletes all products of that user
+        await User.deleteOne({uid: req.body.uid});
         res.status(200).json({message: "success"});
     } catch (e) {
         res.status(500).json({message: e});
