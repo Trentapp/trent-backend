@@ -47,7 +47,9 @@ userRouter.put("/update", async (req, res) => {
 
 userRouter.delete("/delete", async (req, res) => {
     try {
-        await Product.deleteMany({user_id: req.body.uid});//deletes all products of that user
+        const user = await User.findOne({uid: req.body.uid});
+        const user_id = user._id;
+        await Product.deleteMany({user_id: user_id});//deletes all products of that user
         await User.deleteOne({uid: req.body.uid});
         res.status(200).json({message: "success"});
     } catch (e) {
