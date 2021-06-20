@@ -95,7 +95,6 @@ productsRouter.post("/create", async (req,res) => {
         const user_result = await User.find({uid: req.body.user_uid});
         const user = user_result[0];
         const user_id = user._id;
-        console.log(user_id);
         if(!user_id) { throw "User uid not found" }
 
 
