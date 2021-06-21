@@ -13,19 +13,18 @@ transactionRouter.post("/add", async (req,res) => {
         const user_result = await User.find({uid: req.body.user_uid});
         const user = user_result[0];
         const user_id = user._id;
-        if(!user_id) { throw "User uid not found" }
+        if(!user_id) { console.log("User uid not found"); throw "User uid not found" }
 
-				const product = await Product.findById(req.body.productId);
+				const product = await Product.findById(req.body.product_id);
         const lender_id = product.user_id;
-        if(!product_id) { throw "Lender id not found"; }
+        if(!lender_id) { console.log("Lender id not found"); throw "Lender id not found"; }
 
-				if(lender_id == user_id) { throw "Invalid operation: Lender can not be the same user as borrower"}
-
+				if(lender_id == user_id) { console.log("Invalid operation: Lender can not be the same user as borrower"); throw "Invalid operation: Lender can not be the same user as borrower"}
 
 				const transaction = {
 					"borrower" : user_id,
 					"lender" : lender_id,
-					"item_id" : req.body.product_id,
+					"item" : req.body.product_id,
 					"messages" : []
 				};
 
@@ -34,7 +33,7 @@ transactionRouter.post("/add", async (req,res) => {
 				await User.findByIdAndUpdate(user_id, {$push: {transactions_borrower: newTransaction._id}})
 				await User.findByIdAndUpdate(lender_id, {$push: {transactions_lender: newTransaction._id}})
 
-        res.status(200).json({status: "success", productId: newProduct._id});
+        res.status(200).json({status: "success", transaction_id: newTransaction._id});
     } catch(e) {
         res.status(500).json({message:e});
     }
@@ -61,7 +60,7 @@ transactionRouter.post("/sendMessage", async (req,res) => {
 
 				await Transaction.findByIdAndUpdate(req.body.transaction_id, {$push: {messages: message}});
 
-        res.status(200).json({status: "success", productId: newProduct._id});
+        res.status(200).json({status: "success"});
     } catch(e) {
         res.status(500).json({message:e});
     }
@@ -83,7 +82,7 @@ transactionRouter.post("/sendRequest", async (req,res) => {
 		if(transaction.request) { throw "Request already exists"; } // TODO: we should provide a method for updating requests as well
 
 		const item = await Product.findById(transaction.item);
-		const total_price = transaction.duration * item.prices.perHour;
+		const total_price = req.body.duration * item.prices.perHour;
 
 		const request = {
 			"start_date" : req.body.start_date,
@@ -94,7 +93,7 @@ transactionRouter.post("/sendRequest", async (req,res) => {
 
 		await Transaction.findByIdAndUpdate(req.body.transaction_id, {"request":request});
 
-		res.status(200).json({status: "success", productId: newProduct._id});
+		res.status(200).json({status: "success"});
 	} catch(e) {
 		res.status(500).json({message:e});
 	}
