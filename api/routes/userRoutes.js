@@ -20,7 +20,7 @@ userRouter.post("/create", async (req,res) => {
 // get private profile
 userRouter.get("/user/:id", async (req, res) => {
   try {
-      const user = await User.findOne({ uid: req.params.id});
+      const user = await User.findOne({ uid: req.params.id}).orFail();
       res.status(200).json(user);
   } catch(e) {
       res.status(500).json({message: e});
