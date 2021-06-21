@@ -20,6 +20,7 @@ app.get("/", (req,res) => {
 });
 
 mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, () => console.log("connected to DB!"));
+mongoose.set('useFindAndModify', false); // Should we use findAndModify instead?
 
 app.listen(port, () => {
     console.log("listening on port ", port);
