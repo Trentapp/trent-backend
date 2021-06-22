@@ -5,30 +5,30 @@ const TransactionSchema = mongoose.Schema({ //to be extended
       type: String,
       required: true
     },
-		borrower: {
+	borrower: {
       type: String,
       required: true
     },
-		item: {
+	item: {
       type: String,
       required: true
     },
-		start_date: {
-			type: Date,
-			required: true
-		},
-		duration: {
-			type: Number,
-			required: true
-		},
-		granted: {
-			type: Number,
-			required: true
-		},
-		total_price: {
-			type: Number,
-			required: true
-		}
+	start_date: {
+		type: Date,
+		required: true
+	},
+	duration: {
+		type: Number,
+		required: true
+	},
+	granted: {
+		type: Number,
+		required: true
+	},
+	total_price: {
+		type: Number,
+		required: true
+	}
 });
 
 TransactionSchema.index({name: "text"});

@@ -10,7 +10,7 @@ const userRouter = express.Router();
 userRouter.post("/create", async (req,res) => {
     try {
         let user = req.body.user; //I would submit the user data in the request directly, so the new req.body is the old req.body.user
-        const newUser = await User.create({...user, inventory: [], transactions_lender: [], transactions_borrower: []}); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
+        await User.create({...user, inventory: [], transactions_lender: [], transactions_borrower: []}); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
         res.status(200).json({status: "success"});
     } catch(e) {
         res.status(500).json({message:e});
