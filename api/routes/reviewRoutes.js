@@ -28,9 +28,9 @@ reviewRouter.get("/review/:id", async (req, res) => {
     }
 });
 
-reviewRouter.get("/user/:uid", async (req, res) => {
+reviewRouter.get("/user/:id", async (req, res) => {
     try {
-        const reviews = await Review.find({ ratedUserId: req.params.uid});
+        const reviews = await Review.find({ ratedUserId: req.params.id});
         res.status(200).json(reviews);
     } catch(e) {
         res.status(500).json({message: e});

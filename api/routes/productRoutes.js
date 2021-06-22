@@ -92,12 +92,9 @@ productsRouter.post("/create", async (req,res) => {
         let product = req.body.product; // I would add uid to product before making the request and pass the product directly as req.body
         //please make sure that req.body.product already contains the uid, so it is also added to product.
         if(!req.body.user_uid) { throw "No user uid" }
-        const user_result = await User.find({uid: req.body.user_uid});
-        const user = user_result[0];
+        const user = await User.findOne({uid: req.body.user_uid});
         const user_id = user._id;
         if(!user_id) { throw "User uid not found" }
-
-
 
         product = await getCoordinates(product);
         product["user_id"] = user_id;

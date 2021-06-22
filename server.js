@@ -19,7 +19,9 @@ app.get("/", (req,res) => {
     res.send("Yes it works. Access the api with specific calls to /api .");
 });
 
-mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, () => console.log("connected to DB!"));
+mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
+    .then(() => console.log("connected to DB!"))
+    .catch(err => console.log("Failed to connect to DB: ", err));
 mongoose.set('useFindAndModify', false); // Should we use findAndModify instead?
 
 app.listen(port, () => {
