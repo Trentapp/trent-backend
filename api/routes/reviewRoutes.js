@@ -12,8 +12,13 @@ const reviewRouter = express.Router();
 
 reviewRouter.post("/create", async (req,res) => {
     try {
-        await Review.create(req.body); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
-        res.status(200).json({status: "success"});
+        const user = await User.findOne(req.body.uid);
+        if (user._id !== req.body.review.posterId){
+            throw "user identification incorrect";
+        } else {
+            await Review.create(req.body.review);
+            res.status(200).json({status: "success"});
+        }
     } catch(e) {
         res.status(500).json({message:e});
     }
