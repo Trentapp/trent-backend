@@ -12,8 +12,9 @@ const reviewRouter = express.Router();
 
 reviewRouter.post("/create", async (req,res) => {
     try {
-        const user = await User.findOne(req.body.uid);
-        if (user._id !== req.body.review.posterId){
+        const user = await User.findOne({uid: req.body.uid});
+        console.log(user, req.body.review.posterId);
+        if (user._id != req.body.review.posterId){
             throw "user identification incorrect";
         } else {
             await Review.create(req.body.review);
@@ -47,7 +48,7 @@ reviewRouter.get("/user/:id", async (req, res) => {
 reviewRouter.put("/update/:id", async (req, res) => {
     try {
         const user = await User.findOne({uid: req.body.uid});
-        if (user._id !== req.body.review.user_id) {
+        if (user._id != req.body.review.posterId) {
             throw "incorrect user identification";
         } else {
             await Review.replaceOne({_id: req.params.id}, req.body.review);
@@ -62,7 +63,7 @@ reviewRouter.delete("/delete/:id", async (req, res) => {
     try {
         const user = await User.findOne({uid: req.body.uid});
         const review = await Review.findOne({_id: req.params.id});
-        if (user._id !== review.posterId) {
+        if (user._id != review.posterId) {
             throw "incorrect user identification";
         } else {
             await Review.deleteOne({_id: req.params.id});

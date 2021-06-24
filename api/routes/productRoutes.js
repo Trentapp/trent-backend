@@ -124,7 +124,7 @@ productsRouter.delete("/product/delete/:productId", async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
         const user = await User.findOne({uid: req.body.uid});
-        if (user._id !== product.user_id) {
+        if (user._id != product.user_id) {
             throw "incorrect user identification";
         } else {
             await User.updateOne({ _id: product.user_id }, { $pullAll: { inventory: [req.params.productId] } });
@@ -141,7 +141,7 @@ productsRouter.put("/product/update/:productId", async (req, res) => {
     try {
         let product = req.body.product;
         const user = await User.findOne({uid: req.body.uid});
-        if (user._id !== product.user_id){
+        if (user._id != product.user_id){
             throw "incorrect user identification";
         } else {
             product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
