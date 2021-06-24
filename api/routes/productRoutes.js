@@ -19,36 +19,36 @@ const productsRouter = express.Router();
 
 // the default prefix of every route in that file is /api/products
 // getting products
-productsRouter.get("/", async (req,res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
+productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
     const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 10;
     const page = req.query.page ? parseInt(req.query.page, 10) : 0;
 
     let filters = {};//actually we don't need filters here yet, so we can delete it, but later we may want to outsource the data access stuff into another file, so I let it in for now
     let queryConds = [{}];
-    if (req.query.name){ //the search is raather strict, maybe make it somehow less strict in the future, but I think it is fine for now
-        queryConds.push({ $text: {$search: req.query.name} });
+    if (req.query.name) { //the search is raather strict, maybe make it somehow less strict in the future, but I think it is fine for now
+        queryConds.push({ $text: { $search: req.query.name } });
         filters.name = req.query.name;
     }
-    if(req.query.lat && req.query.lng){
-      queryConds.push({location: {$geoWithin: { $centerSphere: [ [ req.query.lng, req.query.lat ], 0.0005 ]}}}) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
+    if (req.query.lat && req.query.lng) {
+        queryConds.push({ location: { $geoWithin: { $centerSphere: [[req.query.lng, req.query.lat], 0.0005] } } }) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
     }
-    if (req.query.day_price_max){
-        queryConds.push({ 'prices.perDay' : {$lte: req.query.day_price_max}});
+    if (req.query.day_price_max) {
+        queryConds.push({ 'prices.perDay': { $lte: req.query.day_price_max } });
         filters.day_price_max = req.query.day_price_max;
     }
-    if (req.query.hour_price_max){
-        queryConds.push({ 'prices.perHour': {$lte: req.query.hour_price_max}});
+    if (req.query.hour_price_max) {
+        queryConds.push({ 'prices.perHour': { $lte: req.query.hour_price_max } });
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like location, time, ... (maybe min_price xD)
-    if (req.query.inventory_user_id){ //alternative: go through user.inventory (I think it is not that much more efficient)
-        queryConds.push({user_id: req.query.inventory_user_id});
+    if (req.query.inventory_user_id) { //alternative: go through user.inventory (I think it is not that much more efficient)
+        queryConds.push({ user_id: req.query.inventory_user_id });
     }
     try {
-        const products = await Product.find({$and: queryConds});//.skip(productsPerPage*page).limit(productsPerPage);
+        const products = await Product.find({ $and: queryConds });//.skip(productsPerPage*page).limit(productsPerPage);
         res.status(200).json(products);
-    } catch(e) {
-        res.status(500).json({message: e});
+    } catch (e) {
+        res.status(500).json({ message: e });
     }
 });
 
@@ -66,14 +66,14 @@ const getCoordinates = async (product) => {
 
 // generating product thumbnail
 const getThumbnail = (product) => {
-  if(product['pictures'] == undefined) { return product }
-  if(product['pictures'].length === 0) { return product }
-  // return product
-  const image = product['pictures'][0];
+    if (product['pictures'] == undefined) { return product }
+    if (product['pictures'].length === 0) { return product }
+    // return product
+    const image = product['pictures'][0];
 
-  let parts = base64Image.split(';');
-  let mimType = parts[0].split(':')[1];
-  let imageData = parts[1].split(',')[1];
+    let parts = base64Image.split(';');
+    let mimType = parts[0].split(':')[1];
+    let imageData = parts[1].split(',')[1];
 
     var img = new Buffer(imageData, 'base64');
     sharp(img)
@@ -87,59 +87,69 @@ const getThumbnail = (product) => {
         })
 }
 
-productsRouter.post("/create", async (req,res) => {
+productsRouter.post("/create", async (req, res) => {
     try {
         let product = req.body.product; // I would add uid to product before making the request and pass the product directly as req.body
         //please make sure that req.body.product already contains the uid, so it is also added to product.
-        if(!req.body.user_uid) { throw "No user uid" }
-        const user = await User.findOne({uid: req.body.user_uid});
+        if (!req.body.user_uid) { throw "No user uid" }
+        const user = await User.findOne({ uid: req.body.user_uid });
         const user_id = user._id;
-        if(!user_id) { throw "User uid not found" }
+        if (!user_id) { throw "User uid not found" }
 
         product = await getCoordinates(product);
         product["user_id"] = user_id;
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
 
-        await User.updateOne({ _id: user_id}, {$push: {inventory: newProduct._id}});
+        await User.updateOne({ _id: user_id }, { $push: { inventory: newProduct._id } });
 
-        res.status(200).json({status: "success", productId: newProduct._id});
-    } catch(e) {
-        res.status(500).json({message:e});
+        res.status(200).json({ status: "success", productId: newProduct._id });
+    } catch (e) {
+        res.status(500).json({ message: e });
     }
 });
 
 //get a specific product
-productsRouter.get("/product/:productId", async (req,res) => {
+productsRouter.get("/product/:productId", async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
         res.status(200).json(product);
-    } catch(e) {
-        res.status(500).json({message: e});
+    } catch (e) {
+        res.status(500).json({ message: e });
     }
 });
 
 //delete a specific product
-productsRouter.delete("/product/delete/:productId", async (req,res) => {
+productsRouter.delete("/product/delete/:productId", async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
-        await User.updateOne({_id: product.user_id}, {$pullAll: {inventory: [req.params.productId]}});
-        await Product.deleteOne({_id: req.params.productId});
-        res.status(200).json({status: "success"});
-    } catch(e) {
-        res.status(500).json({message: e});
+        const user = await User.findOne({uid: req.body.uid});
+        if (user._id !== product.user_id) {
+            throw "incorrect user identification";
+        } else {
+            await User.updateOne({ _id: product.user_id }, { $pullAll: { inventory: [req.params.productId] } });
+            await Product.deleteOne({ _id: req.params.productId });
+        }
+        res.status(200).json({ status: "success" });
+    } catch (e) {
+        res.status(500).json({ message: e });
     }
 });
 
 //Update a specific product
-productsRouter.put("/product/update/:productId", async (req,res) => {
+productsRouter.put("/product/update/:productId", async (req, res) => {
     try {
-        let product = req.body;
-        product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
-        await Product.replaceOne({_id: req.params.productId}, product);
-        res.status(200).json({status: "success"}); // maybe rather return the edited product, but Product.replaceOne does not return that.
-    } catch(e) {
-        res.status(500).json({message: e});
+        let product = req.body.product;
+        const user = await User.findOne({uid: req.body.uid});
+        if (user._id !== product.user_id){
+            throw "incorrect user identification";
+        } else {
+            product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
+            await Product.replaceOne({ _id: req.params.productId }, product);
+            res.status(200).json({ status: "success" }); // maybe rather return the edited product, but Product.replaceOne does not return that.
+        }
+    } catch (e) {
+        res.status(500).json({ message: e });
     }
 });
 

@@ -1,6 +1,7 @@
 import express from "express"
 
 import Review from "../models/Review.js"
+import User from "../models/User.js";
 //not sure if I need the following
 //import User from "../models/User.js"
 //import Product from "../models/Product.js"
@@ -40,8 +41,13 @@ reviewRouter.get("/user/:id", async (req, res) => {
 // update review
 reviewRouter.put("/update/:id", async (req, res) => {
     try {
-        await Review.replaceOne({_id: req.params.id}, req.body);
-        res.status(200).json({status: "success"});
+        const user = await User.findOne({uid: req.body.uid});
+        if (user._id !== req.body.review.user_id) {
+            throw "incorrect user identification";
+        } else {
+            await Review.replaceOne({_id: req.params.id}, req.body.review);
+            res.status(200).json({status: "success"});
+        }
     } catch(e) {
         res.status(500).json({message: e});
     }
@@ -49,8 +55,14 @@ reviewRouter.put("/update/:id", async (req, res) => {
 
 reviewRouter.delete("/delete/:id", async (req, res) => {
     try {
-        await Review.deleteOne({_id: req.params.id});
-        res.status(200).json({message: "success"});
+        const user = await User.findOne({uid: req.body.uid});
+        const review = await Review.findOne({_id: req.params.id});
+        if (user._id !== review.posterId) {
+            throw "incorrect user identification";
+        } else {
+            await Review.deleteOne({_id: req.params.id});
+            res.status(200).json({message: "success"});
+        }
     } catch (e) {
         res.status(500).json({message: e});
     }
