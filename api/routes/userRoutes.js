@@ -31,7 +31,7 @@ userRouter.get("/user/:uid", async (req, res) => {
 userRouter.get("/user-profile/:id", async (req, res) => {
     try {
         const user = await User.findOne({_id: req.params.id}).orFail();
-        res.status(200).json({name: user.name, mail: user.mail, inventory: user.inventory, address: user.address});//should address and mail be publicly accessible?
+        res.status(200).json({name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings});//should address and mail be publicly accessible?
     } catch(e) {
         res.status(500).json({message: e});
     }
