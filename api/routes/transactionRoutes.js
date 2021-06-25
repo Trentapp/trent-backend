@@ -69,7 +69,7 @@ transactionRouter.post("/add", async (req, res) => {
 
 transactionRouter.post("/sendRequest", async (req, res) => {
 	try {
-		if (!req.body.user_uid || !req.body.product_id || !req.body.start_date || !req.body.duration) { throw "Missing parameters"; }
+		if (!req.body.user_uid || !req.body.product_id || !req.body.start_date || !req.body.end_date) { throw "Missing parameters"; }
 
 		const user_result = await User.find({ uid: req.body.user_uid });
 		const user = user_result[0];
@@ -83,14 +83,16 @@ transactionRouter.post("/sendRequest", async (req, res) => {
 		if (lender_id == user_id) { console.log("Invalid operation: Lender can not be the same user as borrower"); throw "Invalid operation: Lender can not be the same user as borrower" }
 
 		const item = await Product.findById(transaction.item);
-		const total_price = req.body.duration * item.prices.perHour;
+		const diffMilliSeconds = req.body.end_date - req.body.start_date;
+		const total_price = (diffMilliSeconds/(1000*60*60*24)) * item.prices.perDay;
+		//const total_price_per_Hour = (diffMilliseconds/(1000*60*60)) * item.prices.perHour;
 
 		const transaction = {
 			"borrower": user_id,
 			"lender": lender_id,
 			"item": req.body.product_id,
 			"start_date": req.body.start_date,
-			"duration": req.body.duration,
+			"end_date": req.body.end_date,
 			"granted": 0,
 			"total_price": total_price
 		};
