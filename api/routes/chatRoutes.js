@@ -3,10 +3,10 @@ import User from "../models/User.js"
 import Product from "../models/Product.js"
 import Chat from "../models/Chat.js"
 
-const messageRouter = express.Router();
+const chatRouter = express.Router();
 
 
-messageRouter.post("/sendMessage", async (req,res) => {
+chatRouter.post("/sendMessage", async (req,res) => {
     try {
 				if (!req.body.user_uid || !(req.body.chat_id || req.body.item_id) || !req.body.content) { throw "Missing parameters"; }
 
@@ -55,4 +55,4 @@ messageRouter.post("/sendMessage", async (req,res) => {
 });
 
 
-export default messageRouter;
+export default chatRouter;
