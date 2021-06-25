@@ -17,8 +17,8 @@ const TransactionSchema = mongoose.Schema({ //to be extended
 		type: Date,
 		required: true
 	},
-	duration: {
-		type: Number,
+	end_date:{
+		type: Date,
 		required: true
 	},
 	granted: {
