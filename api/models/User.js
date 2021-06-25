@@ -15,7 +15,9 @@ const UserSchema = mongoose.Schema({ //to be extended
     address: AddressSchema,
     inventory: [String], // I think actually you we should do it like: inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Products"}]
     transactions_lender: [String],
-    transactions_borrower: [String]
+    transactions_borrower: [String],
+    rating: Number,
+    numberOfRatings: Number
 });
 
 UserSchema.index({name: "text"});

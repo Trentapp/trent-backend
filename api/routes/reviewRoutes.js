@@ -18,6 +18,10 @@ reviewRouter.post("/create", async (req,res) => {
             throw "user identification incorrect";
         } else {
             await Review.create(req.body.review);
+            const owner = await User.findById(req.ratedUserId);
+            const new_user_rating = (owner.rating * user.numberOfRatings + req.body.stars)/(owner.numberOfRatings + 1);
+            await User.findByIdAndUpdate(owner._id, {rating: new_user_rating, numberOfRatings: (owner.numberOfRatings + 1)});
+            res.status(200).json({status: "success"});
             res.status(200).json({status: "success"});
         }
     } catch(e) {
@@ -51,7 +55,14 @@ reviewRouter.put("/update/:id", async (req, res) => {
         if (user._id != req.body.review.posterId) {
             throw "incorrect user identification";
         } else {
+            const oldReview = await Review.findById(req.params.id);
             await Review.replaceOne({_id: req.params.id}, req.body.review);
+
+            const difference = req.body.review.stars - oldReview.stars;
+
+            const owner = User.findById(req.ratedUserId);
+            const new_user_rating = owner - difference * (1/owner.numberOfRatings);
+            await User.findByIdAndUpdate(owner._id, {rating: new_user_rating});
             res.status(200).json({status: "success"});
         }
     } catch(e) {
