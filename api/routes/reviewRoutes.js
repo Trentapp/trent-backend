@@ -41,7 +41,17 @@ reviewRouter.get("/review/:id", async (req, res) => {
 
 reviewRouter.get("/user/:id", async (req, res) => {
     try {
-        const reviews = await Review.find({ ratedUserId: req.params.id});
+        let reviews = await Review.find({ ratedUserId: req.params.id});
+        // for(let i = 0; i < reviews.length; i++) {
+        //   // TODO: if that fails just continue
+        //   let review = reviews[i];
+        //   const poster = await User.findById(review.posterId);
+        //   console.log(poster.name);
+        //   // review.posterName = poster.name;
+        //   review["style"] = "10/10";
+        //   console.log(review);
+        //   reviews[i] = review;
+        // }
         res.status(200).json(reviews);
     } catch(e) {
         res.status(500).json({message: e});
