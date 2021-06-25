@@ -54,8 +54,9 @@ chatRouter.post("/sendMessage", async (req,res) => {
     }
 });
 
-chatRouter.get("/get", async (req, res) => {
+chatRouter.post("/get", async (req, res) => {
     try {
+				console.log(req.body);
 				if(!req.body.uid) { throw "Missing parameters"; }
 
 				const user = await User.findOne({uid: req.body.uid});
