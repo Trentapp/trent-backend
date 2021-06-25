@@ -22,7 +22,7 @@ const TransactionSchema = mongoose.Schema({ //to be extended
 		required: true
 	},
 	granted: {
-		type: Number,
+		type: Number, // 0 means "no response yet", 1 means "rejected" and 2 means "accepted"
 		required: true
 	},
 	total_price: {
