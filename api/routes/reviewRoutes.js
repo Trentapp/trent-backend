@@ -14,7 +14,7 @@ reviewRouter.post("/create", async (req,res) => {
     try {
         const user = await User.findOne({uid: req.body.uid});
         console.log(user, req.body.review.posterId);
-        if (user._id != req.body.review.posterId){
+        if (user._id != req.body.review.posterId || req.body.review.posterId == req.body.review.ratedUserId){
             throw "user identification incorrect";
         } else {
             await Review.create(req.body.review);
