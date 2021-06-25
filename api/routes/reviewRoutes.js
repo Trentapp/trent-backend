@@ -61,7 +61,7 @@ reviewRouter.put("/update/:id", async (req, res) => {
             const difference = req.body.review.stars - oldReview.stars;
 
             const owner = User.findById(req.ratedUserId);
-            const new_user_rating = owner - difference * (1/owner.numberOfRatings);
+            const new_user_rating = owner + difference * (1/owner.numberOfRatings);
             await User.findByIdAndUpdate(owner._id, {rating: new_user_rating});
             res.status(200).json({status: "success"});
         }
