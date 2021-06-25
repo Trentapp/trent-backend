@@ -67,7 +67,7 @@ transactionRouter.post("/add", async (req, res) => {
 // });
 
 
-transactionRouter.post("/sendRequest", async (req, res) => {
+transactionRouter.post("/sendRequest", async (req, res) => {//I would change the name of that route
 	try {
 		if (!req.body.user_uid || !req.body.product_id || !req.body.start_date || !req.body.end_date) { throw "Missing parameters"; }
 
@@ -84,7 +84,10 @@ transactionRouter.post("/sendRequest", async (req, res) => {
 
 		const item = await Product.findById(transaction.item);
 		const diffMilliSeconds = req.body.end_date - req.body.start_date;
-		const total_price = (diffMilliSeconds/(1000*60*60*24)) * item.prices.perDay;
+		if (diffMilliSeconds < 0){
+			throw "Start Date must be before End Date";
+		}
+		const total_price = Math.ceil(diffMilliSeconds/(1000*60*60*24)) * item.prices.perDay;
 		//const total_price_per_Hour = (diffMilliseconds/(1000*60*60)) * item.prices.perHour;
 
 		const transaction = {
