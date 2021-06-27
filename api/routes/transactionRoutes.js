@@ -81,6 +81,7 @@ transactionRouter.post("/sendRequest", async (req, res) => {//I would change the
 		const [d_end, d_start] = [new Date(req.body.end_date), new Date(req.body.start_date)];
 		const diffMilliSeconds = d_end - d_start;
 		if (diffMilliSeconds < 0){
+			console.log("Start date is after End Date");
 			throw "Start Date must be before End Date";
 		}
 		const total_price = Math.ceil(diffMilliSeconds/(1000*60*60*24)) * product.prices.perDay;
@@ -107,5 +108,31 @@ transactionRouter.post("/sendRequest", async (req, res) => {//I would change the
 	}
 });
 
+transactionRouter.get("/transaction/:id", async (req,res) => {
+	try {
+		const transaction = await Transaction.findById(req.params.id);
+		res.status(200).json(transaction);
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+});
+
+transactionRouter.get("/findByLender", async (req,res) => {
+	try {
+		const transactions = await Transaction.find({lender: req.body.user_id});
+		res.status(200).json(transactions);
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+});
+
+transactionRouter.get("/findByBorrower", async (req,res) => {
+	try {
+		const transactions = await Transaction.find({borrower: req.body.user_id});
+		res.status(200).json(transactions);
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+});
 
 export default transactionRouter;
