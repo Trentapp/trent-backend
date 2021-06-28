@@ -135,4 +135,21 @@ transactionRouter.get("/findByBorrower/:user_id", async (req,res) => {
 	}
 });
 
+transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put the granted code into req.body.granted // (also pass uid in body)
+	try {
+		const user = await User.findOne({uid: req.body.uid});
+		const transaction = await Transaction.findById(req.params.id);
+		if (user._id === transaction.borrower && req.body.granted === 1) { //the borrower can only cancel a request
+			await Transaction.updateOne({_id: req.params.id}, {granted: 1});
+		}
+		else if (user._id === transaction.lender){
+			await Transaction.updateOne({_id: req.params.id}, {granted: req.body.granted});
+		}
+		res.status(200).json({status: "success"});
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+})
+
+
 export default transactionRouter;

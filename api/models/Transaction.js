@@ -21,7 +21,7 @@ const TransactionSchema = mongoose.Schema({ //to be extended
 		type: Date,
 		required: true
 	},
-	granted: {
+	granted: { //maybe rename granted (to status or so)
 		type: Number, // 0 means "no response yet", 1 means "rejected" (or cancelled) and 2 means "accepted"
 		required: true
 	},
