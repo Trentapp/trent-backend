@@ -117,18 +117,18 @@ transactionRouter.get("/transaction/:id", async (req,res) => {
 	}
 });
 
-transactionRouter.get("/findByLender", async (req,res) => {
+transactionRouter.get("/findByLender/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({lender: req.body.user_id});
+		const transactions = await Transaction.find({lender: req.params.user_id});
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });
 	}
 });
 
-transactionRouter.get("/findByBorrower", async (req,res) => {
+transactionRouter.get("/findByBorrower/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({borrower: req.body.user_id});
+		const transactions = await Transaction.find({borrower: req.params.user_id});
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });
