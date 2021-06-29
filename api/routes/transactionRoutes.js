@@ -117,6 +117,8 @@ transactionRouter.get("/transaction/:id", async (req,res) => {
 	}
 });
 
+//small problem: If someone goes to the backend API, he could see all the transactions for a user, so perhaps change query by user._id to query by user.uid, but not high priority
+
 transactionRouter.get("/findByLender/:user_id", async (req,res) => {
 	try {
 		const transactions = await Transaction.find({lender: req.params.user_id});
@@ -139,11 +141,15 @@ transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put 
 	try {
 		const user = await User.findOne({uid: req.body.uid});
 		const transaction = await Transaction.findById(req.params.id);
-		if (user._id === transaction.borrower && req.body.granted === 1) { //the borrower can only cancel a request
+		if (user._id == transaction.borrower && req.body.granted == 1) { //the borrower can only cancel a request
 			await Transaction.updateOne({_id: req.params.id}, {granted: 1});
 		}
-		else if (user._id === transaction.lender){
-			await Transaction.updateOne({_id: req.params.id}, {granted: req.body.granted});
+		else if (user._id == transaction.lender){
+			if (req.body.granted == 2 && transaction.granted == 0){
+				await Transaction.updateOne({_id: req.params.id}, {granted: 2});
+			} else if (req.body.granted == 1){
+				await Transaction.updateOne({_id: req.params.id}, {granted: 1});
+			}
 		}
 		res.status(200).json({status: "success"});
 	} catch (e) {

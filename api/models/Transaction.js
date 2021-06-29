@@ -22,7 +22,7 @@ const TransactionSchema = mongoose.Schema({ //to be extended
 		required: true
 	},
 	granted: { //maybe rename granted (to status or so)
-		type: Number, // 0 means "no response yet", 1 means "rejected" (or cancelled) and 2 means "accepted"
+		type: Number, // 0 means "no response yet", 1 means "rejected" (or cancelled) and 2 means "accepted" // (or should we do an extra state for cancelled by user?)
 		required: true
 	},
 	total_price: {
