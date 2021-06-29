@@ -31,7 +31,7 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         filters.name = req.query.name;
     }
     if (req.query.lat && req.query.lng) {
-        queryConds.push({ location: { $geoWithin: { $centerSphere: [[req.query.lng, req.query.lat], 0.0005] } } }) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
+        queryConds.push({ location: { $geoWithin: { $centerSphere: [[req.query.lng, req.query.lat], 5/6371] } } }) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
     }
     if (req.query.day_price_max) {
         queryConds.push({ 'prices.perDay': { $lte: req.query.day_price_max } });
@@ -58,6 +58,7 @@ const getCoordinates = async (product) => {
     try {
         const responseLoc = await geocoder.geocode(`${product.address.street} ${product.address.houseNumber}, ${product.address.zipcode} ${product.address.city}, ${product.address.country}`); //may not need to be that detailed
         product['location.coordinates'] = [responseLoc[0].longitude, responseLoc[0].latitude];
+        product['location.type'] = "Point";
         return product;
     } catch (e) {
         console.log("Failed to find coordinates of address: ", e);
