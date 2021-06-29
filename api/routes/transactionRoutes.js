@@ -119,9 +119,10 @@ transactionRouter.get("/transaction/:id", async (req,res) => {
 
 //small problem: If someone goes to the backend API, he could see all the transactions for a user, so perhaps change query by user._id to query by user.uid, but not high priority
 
+//find by lender and find by borrower now only return current transactions (not cancelled and not enddate < now)
 transactionRouter.get("/findByLender/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({lender: req.params.user_id});
+		const transactions = await Transaction.find({$and: [{lender: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]});
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });
@@ -130,7 +131,17 @@ transactionRouter.get("/findByLender/:user_id", async (req,res) => {
 
 transactionRouter.get("/findByBorrower/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({borrower: req.params.user_id});
+		const transactions = await Transaction.find({$and: [{lender: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]});
+		res.status(200).json(transactions);
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+});
+
+//findPastTransactions returns all transactions of a user that were cancelled ore where enddate < now
+transactionRouter.get("/findPastTransactions/:user_id", async (req,res) => {
+	try {
+		const transactions = await Transaction.find({$and: [{$or: [{lender: req.params.user_id}, {borrower: req.params.user_id}]}, {$or: [{end_date: {$lt: new Date()}}, {granted: 1}]}]});
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });
