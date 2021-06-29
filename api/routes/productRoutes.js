@@ -40,7 +40,7 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
     if (req.query.hour_price_max) {
         queryConds.push({ 'prices.perHour': { $lte: req.query.hour_price_max } });
         filters.hour_price_max = req.query.hour_price_max;
-    } // add more filter options later, like location, time, ... (maybe min_price xD)
+    } // add more filter options later, like time, ... (maybe min_price xD)
     if (req.query.inventory_user_id) { //alternative: go through user.inventory (I think it is not that much more efficient)
         queryConds.push({ user_id: req.query.inventory_user_id });
     }
