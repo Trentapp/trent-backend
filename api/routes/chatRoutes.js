@@ -5,6 +5,7 @@ import Chat from "../models/Chat.js"
 
 const chatRouter = express.Router();
 
+//every route here with prefix /api/chats
 
 chatRouter.post("/sendMessage", async (req, res) => {
 	try {
@@ -37,7 +38,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 
 				const chat = {
 					"lender": product.user_id,
-					"borrower": (product.user_id == user_id) ? req.body.recipient : user_id,
+					"borrower": (product.user_id == user_id) ? req.body.recipient : product.user_id,
 					"item_id": req.body.item_id,
 					"messages": [message]
 				}
