@@ -34,5 +34,5 @@ const ProductSchema = mongoose.Schema({ //to be extended
     pictures: [String]
 });
 
-ProductSchema.index({name: "text"});
+ProductSchema.index({name: "text", location: "2dsphere"});
 export default mongoose.model("Products", ProductSchema);
