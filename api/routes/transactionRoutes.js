@@ -7,7 +7,7 @@ const transactionRouter = express.Router();
 
 transactionRouter.post("/add", async (req, res) => {
 	try {
-		console.log(req.body);
+		console.log("body passed in to /transactions/add : ", req.body);
 		if (!req.body.user_uid || !req.body.product_id) { throw "Missing parameters"; }
 
 		const user_result = await User.find({ uid: req.body.user_uid });

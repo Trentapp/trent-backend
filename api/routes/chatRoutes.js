@@ -58,7 +58,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 // get should definitely be implemented as http GET request. We can put the uid into the route (/get/:uid) (I think it is not dangerous if you thought that)
 chatRouter.post("/get", async (req, res) => {
 	try {
-		console.log(req.body);
+		console.log("body passed into /chats/get : ", req.body);
 		if (!req.body.uid) { throw "Missing parameters"; }
 
 		const user = await User.findOne({ uid: req.body.uid });

@@ -13,15 +13,13 @@ const reviewRouter = express.Router();
 reviewRouter.post("/create", async (req,res) => {
     try {
         const user = await User.findOne({uid: req.body.uid});
-        console.log(user, req.body.review.posterId);
         if (user._id != req.body.review.posterId || req.body.review.posterId == req.body.review.ratedUserId){
             throw "user identification incorrect";
         } else {
-            await Review.create(req.body.review);
-            const owner = await User.findById(req.ratedUserId);
-            const new_user_rating = (owner.rating * user.numberOfRatings + req.body.stars)/(owner.numberOfRatings + 1);
+            await Review.create(req.body.review);//this is dangerous! An update should only occur if everything works (otherwise it can throw an error and still partially update). Fix that later.
+            const owner = await User.findById(req.body.review.ratedUserId);
+            const new_user_rating = (owner.rating * owner.numberOfRatings + req.body.review.stars)/(owner.numberOfRatings + 1);// I hope we don't get rounding errors
             await User.findByIdAndUpdate(owner._id, {rating: new_user_rating, numberOfRatings: (owner.numberOfRatings + 1)});
-            res.status(200).json({status: "success"});
             res.status(200).json({status: "success"});
         }
     } catch(e) {
@@ -67,11 +65,9 @@ reviewRouter.put("/update/:id", async (req, res) => {
         } else {
             const oldReview = await Review.findById(req.params.id);
             await Review.replaceOne({_id: req.params.id}, req.body.review);
-
             const difference = req.body.review.stars - oldReview.stars;
-
-            const owner = User.findById(req.ratedUserId);
-            const new_user_rating = owner + difference * (1/owner.numberOfRatings);
+            const owner = await User.findById(req.body.review.ratedUserId);
+            const new_user_rating = owner.rating + difference * (1/owner.numberOfRatings);
             await User.findByIdAndUpdate(owner._id, {rating: new_user_rating});
             res.status(200).json({status: "success"});
         }
@@ -80,6 +76,7 @@ reviewRouter.put("/update/:id", async (req, res) => {
     }
 });
 
+//todo: update user rating on delete Review
 reviewRouter.delete("/delete/:id", async (req, res) => {
     try {
         const user = await User.findOne({uid: req.body.uid});
