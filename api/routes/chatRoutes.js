@@ -73,5 +73,30 @@ chatRouter.post("/get", async (req, res) => {
 	}
 });
 
+chatRouter.get("/chatsOfUser/:user_uid", async (req,res) => {
+	try {
+		if (!req.params.user_uid) { throw "Missing parameters"; }
+
+		const user = await User.findOne({ uid: req.params.user_uid });
+		const user_id = user._id;
+		if (!user_id) { throw "User uid not found"; }
+
+		const chats = await Chat.find({ $or: [{ borrower: user_id }, { lender: user_id }] });
+
+		res.status(200).json(chats);
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+});
+
+chatRouter.get("/chat/:id", async (req,res) => {
+	try {
+		const chat = await Chat.findById(req.params.id);
+		res.status(200).json(chat);
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+})
+
 
 export default chatRouter;
