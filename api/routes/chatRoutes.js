@@ -38,7 +38,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 
 				const chat = {
 					"lender": product.user_id,
-					"borrower": (product.user_id == user_id) ? req.body.recipient : product.user_id,
+					"borrower": (product.user_id == user_id) ? req.body.recipient : user_id,
 					"item_id": req.body.item_id,
 					"messages": [message]
 				}
@@ -82,7 +82,6 @@ chatRouter.get("/chatsOfUser/:user_uid", async (req,res) => {
 		if (!user_id) { throw "User uid not found"; }
 
 		const chats = await Chat.find({ $or: [{ borrower: user_id }, { lender: user_id }] });
-
 		res.status(200).json(chats);
 	} catch (e) {
 		res.status(500).json({ message: e });
