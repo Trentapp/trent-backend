@@ -101,7 +101,6 @@ chatRouter.get("/chat/:id", async (req,res) => {
 chatRouter.get("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
 	try {
 		const chat = await Chat.findOne({$and: [{lender: req.params.lenderId}, {borrower: req.params.borrowerId}, {item_id: req.params.productId}] });
-		console.log(chat);
 		if (!chat){
 			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, item_id: req.params.productId, messages: []});
 		}
