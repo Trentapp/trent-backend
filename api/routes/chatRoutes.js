@@ -102,7 +102,7 @@ chatRouter.get("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", a
 	try {
 		const chat = await Chat.findOne({$and: [{lender: req.params.lenderId}, {borrower: req.params.borrowerId}, {item_id: req.params.productId}] });
 		if (!chat){
-			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, item_id: req.params.productId, messages: []});
+			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, item_id: req.params.productId, messages: []});//this somehow not may be returned properly
 		}
 		res.status(200).json(chat);
 	} catch (e) {
