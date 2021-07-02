@@ -110,6 +110,28 @@ productsRouter.post("/create", async (req, res) => {
     }
 });
 
+// old product create route (with file transfer)
+product.post("/create2", upload.any(), upload.single("product"), async (req,res) => {
+    try {
+        const images = [];
+        let product;
+        for (const file of req.files){
+            if (file.fieldname == "product"){
+                product = JSON.parse(fs.readFileSync(file.path).toString());
+            } else if (file.fieldname == "image"){
+                images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+            }
+        }
+        product.pictures = images;
+        product = await getCoordinates(product);
+        //product = getThumbnail(product);
+        const newProduct = await Product.create(product);
+        res.status(200).json(newProduct);
+    } catch(e) {
+        res.status(500).json({message:e});
+    }
+});
+
 //get a specific product
 productsRouter.get("/product/:productId", async (req, res) => {
     try {
