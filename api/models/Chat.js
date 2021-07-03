@@ -20,9 +20,18 @@ export const MessageSchema = mongoose.Schema({
 });
 
 const ChatSchema = mongoose.Schema({
-	lender: String,
-	borrower: String,
-	item_id: String,
+	lender: {
+		type: String,
+		required: true
+	},
+	borrower: {
+		type: String,
+		required: true
+	},
+	item_id: {
+		type: String,
+		required: true
+	},
 	messages: [MessageSchema]
 })
 

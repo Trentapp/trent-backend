@@ -45,7 +45,7 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         queryConds.push({ user_id: req.query.inventory_user_id });
     }
     try {
-        const products = await Product.find({ $and: queryConds });//.skip(productsPerPage*page).limit(productsPerPage);
+        const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'Users', select:['name']}]);//.skip(productsPerPage*page).limit(productsPerPage);
         res.status(200).json(products);
     } catch (e) {
         res.status(500).json({ message: e });

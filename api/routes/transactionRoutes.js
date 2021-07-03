@@ -5,67 +5,6 @@ import Transaction from "../models/Transaction.js"
 
 const transactionRouter = express.Router();
 
-transactionRouter.post("/add", async (req, res) => {
-	try {
-		console.log("body passed in to /transactions/add : ", req.body);
-		if (!req.body.user_uid || !req.body.product_id) { throw "Missing parameters"; }
-
-		const user_result = await User.find({ uid: req.body.user_uid });
-		const user = user_result[0];
-		const user_id = user._id;
-		if (!user_id) { console.log("User uid not found"); throw "User uid not found" }
-
-		const product = await Product.findById(req.body.product_id);
-		const lender_id = product.user_id;
-		if (!lender_id) { console.log("Lender id not found"); throw "Lender id not found"; }
-
-		if (lender_id == user_id) { console.log("Invalid operation: Lender can not be the same user as borrower"); throw "Invalid operation: Lender can not be the same user as borrower" }
-
-		const transaction = {
-			"borrower": user_id,
-			"lender": lender_id,
-			"item": req.body.product_id,
-			"messages": []
-		};
-
-		const newTransaction = await Transaction.create(transaction);
-
-		await User.findByIdAndUpdate(user_id, { $push: { transactions_borrower: newTransaction._id } })
-		await User.findByIdAndUpdate(lender_id, { $push: { transactions_lender: newTransaction._id } })
-
-		res.status(200).json({ status: "success", transaction_id: newTransaction._id });
-	} catch (e) {
-		res.status(500).json({ message: e });
-	}
-});
-
-
-// transactionRouter.post("/sendMessage", async (req,res) => {
-//     try {
-// 				if (!req.body.user_uid || !req.body.transaction_id || !req.body.content) { throw "Missing parameters"; }
-//
-//         const user_result = await User.find({uid: req.body.user_uid});
-//         const user = user_result[0];
-//         const user_id = user._id;
-//         if(!user_id) { throw "User uid not found" }
-//
-// 				const transaction = await Transaction.findById(req.body.transaction_id);
-// 				if(transaction.borrower != user_id && transaction.lender != user_id) { throw "User not authorized"; }
-//
-// 				const message = {
-// 					"timestamp" : new Date().getTime(),
-// 					"sender" : user._id,
-// 					"content" : req.body.content
-// 				};
-//
-// 				await Transaction.findByIdAndUpdate(req.body.transaction_id, {$push: {messages: message}});
-//
-//         res.status(200).json({status: "success"});
-//     } catch(e) {
-//         res.status(500).json({message:e});
-//     }
-// });
-
 
 transactionRouter.post("/sendRequest", async (req, res) => {//I would change the name of that route
 	try {
@@ -110,7 +49,7 @@ transactionRouter.post("/sendRequest", async (req, res) => {//I would change the
 
 transactionRouter.get("/transaction/:id", async (req,res) => {
 	try {
-		const transaction = await Transaction.findById(req.params.id);
+		const transaction = await Transaction.findById(req.params.id).populate([{path: 'item', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
 		res.status(200).json(transaction);
 	} catch (e) {
 		res.status(500).json({ message: e });
@@ -122,7 +61,7 @@ transactionRouter.get("/transaction/:id", async (req,res) => {
 //find by lender and find by borrower now only return current transactions (not cancelled and not enddate < now)
 transactionRouter.get("/findByLender/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({$and: [{lender: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]});
+		const transactions = await Transaction.find({$and: [{lender: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]}).populate([{path: 'item', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });
@@ -131,7 +70,7 @@ transactionRouter.get("/findByLender/:user_id", async (req,res) => {
 
 transactionRouter.get("/findByBorrower/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({$and: [{lender: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]});
+		const transactions = await Transaction.find({$and: [{lender: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]}).populate([{path: 'item', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });
@@ -141,7 +80,7 @@ transactionRouter.get("/findByBorrower/:user_id", async (req,res) => {
 //findPastTransactions returns all transactions of a user that were cancelled ore where enddate < now
 transactionRouter.get("/findPastTransactions/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({$and: [{$or: [{lender: req.params.user_id}, {borrower: req.params.user_id}]}, {$or: [{end_date: {$lt: new Date()}}, {granted: 1}]}]});
+		const transactions = await Transaction.find({$and: [{$or: [{lender: req.params.user_id}, {borrower: req.params.user_id}]}, {$or: [{end_date: {$lt: new Date()}}, {granted: 1}]}]}).populate([{path: 'item', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });

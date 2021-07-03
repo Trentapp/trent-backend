@@ -2,15 +2,18 @@ import mongoose from "mongoose"
 
 const TransactionSchema = mongoose.Schema({ //to be extended
     lender: {//maybe replace lender with lender.id and lender.username and do the same for borrower
-      type: String,
+      type: mongoose.Schema.ObjectId,
+      ref: 'Users',
       required: true
     },
 	borrower: {//for clean code and understanding purpuses I would call everything that is an ID sth with id (e.g. here borrowerId)
-      type: String,
+      type: mongoose.Schema.ObjectId,
+      ref: 'Users',
       required: true
     },
 	item: {
-      type: String,
+      type: mongoose.Schema.ObjectId,
+      ref: 'Products',
       required: true
     },
 	start_date: {

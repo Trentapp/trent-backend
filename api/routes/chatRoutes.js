@@ -65,7 +65,7 @@ chatRouter.post("/get", async (req, res) => {
 		const user_id = user._id;
 		if (!user_id) { throw "User uid not found"; }
 
-		const chats = await Chat.find({ $or: [{ borrower: user_id }, { lender: user_id }] });
+		const chats = await Chat.find({ $or: [{ borrower: user_id }, { lender: user_id }] }).populate([{path: 'item_id', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 
 		res.status(200).json(chats);
 	} catch (e) {
@@ -81,7 +81,7 @@ chatRouter.get("/chatsOfUser/:user_uid", async (req,res) => {
 		const user_id = user._id;
 		if (!user_id) { throw "User uid not found"; }
 
-		const chats = await Chat.find({ $or: [{ borrower: user_id }, { lender: user_id }] });
+		const chats = await Chat.find({ $or: [{ borrower: user_id }, { lender: user_id }] }).populate([{path: 'item_id', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 
 		res.status(200).json(chats);
 	} catch (e) {
@@ -91,7 +91,7 @@ chatRouter.get("/chatsOfUser/:user_uid", async (req,res) => {
 
 chatRouter.get("/chat/:id", async (req,res) => {
 	try {
-		const chat = await Chat.findById(req.params.id);
+		const chat = await Chat.findById(req.params.id).populate([{path: 'item_id', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 		res.status(200).json(chat);
 	} catch (e) {
 		res.status(500).json({ message: e });
