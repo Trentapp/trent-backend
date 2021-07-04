@@ -28,7 +28,7 @@ const ChatSchema = mongoose.Schema({
 		type: String,
 		required: true
 	},
-	item_id: {
+	item: {
 		type: String,
 		required: true
 	},

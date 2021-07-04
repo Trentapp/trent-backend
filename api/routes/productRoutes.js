@@ -25,7 +25,7 @@ const productsRouter = express.Router();
 // getting products
 productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
-    const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 10;
+    const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 20;
     const page = req.query.page ? parseInt(req.query.page, 10) : 0;
 
     let filters = {};//actually we don't need filters here yet, so we can delete it, but later we may want to outsource the data access stuff into another file, so I let it in for now
@@ -49,7 +49,7 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         queryConds.push({ user_id: req.query.inventory_user_id });
     }
     try {
-        const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'Users', select:['name']}]);//.skip(productsPerPage*page).limit(productsPerPage);
+        const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'Users', select:['name']}]).skip(productsPerPage*page).limit(productsPerPage);//(other order may be slightly more efficient (populate at the end))
         res.status(200).json(products);
     } catch (e) {
         res.status(500).json({ message: e });
@@ -102,7 +102,7 @@ productsRouter.post("/create", async (req, res) => {
         if (!user_id) { throw "User uid not found" }
 
         product = await getCoordinates(product);
-        product["user_id"] = user_id;
+        product["user"] = user_id;
         // product = getThumbnail(product);
         const newProduct = await Product.create(product);
 
@@ -129,7 +129,7 @@ productsRouter.post("/create2", upload.any(), upload.single("body"), async (req,
         }
         const user = await User.findOne({ uid: body.user_uid });
         if (!user._id) { throw "User uid not found" }
-        product["user_id"] = user._id;
+        product["user"] = user._id;
 
         product.pictures = images;
         product = await getCoordinates(product);
@@ -145,7 +145,7 @@ productsRouter.post("/create2", upload.any(), upload.single("body"), async (req,
 //get a specific product
 productsRouter.get("/product/:productId", async (req, res) => {
     try {
-        const product = await Product.findById(req.params.productId);
+        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'Users', select:['name']}]);
         res.status(200).send(product);
     } catch (e) {
         res.status(500).json({ message: e });
@@ -187,7 +187,7 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
         if (user._id != oldProduct.user_id){
             throw "incorrect user identification";
         }
-        product["user_id"] = user._id
+        product["user"] = user._id
         product.pictures = images;
         product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
         await Product.replaceOne({ _id: req.params.productId }, product);

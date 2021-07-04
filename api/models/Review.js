@@ -6,8 +6,8 @@ const ReviewSchema = mongoose.Schema({ //to be extended
         required: true,
     },
     comment: String,
-    posterId: String,//_id of user who posted the review
-    ratedUserId: String,//_id of user who was rated
+    poster: String,//_id of user who posted the review
+    ratedUser: String,//_id of user who was rated
     stars: {
         type: Number,
         required: true,
