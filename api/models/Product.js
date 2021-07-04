@@ -8,6 +8,11 @@ export const AddressSchema = mongoose.Schema({
     country: String
 });
 
+const ImageSchema = mongoose.Schema({
+    data: Buffer,
+    contentType: String,
+});
+
 const ProductSchema = mongoose.Schema({ //to be extended
     name: {
         type: String,
@@ -31,7 +36,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
     },
     user_id: String,
     thumbnail: String,
-    pictures: [String]
+    pictures: [ImageSchema]
 });
 
 ProductSchema.index({name: "text", location: "2dsphere"});

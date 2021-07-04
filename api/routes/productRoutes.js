@@ -2,9 +2,13 @@ import express from "express"
 import NodeGeocoder from "node-geocoder"
 import dotenv from "dotenv"
 import sharp from "sharp"
+import multer from "multer"
+import fs from "fs"
 
 import Product from "../models/Product.js"
 import User from "../models/User.js"
+
+const upload = multer({dest: "../uploads/"});
 
 dotenv.config();
 const options = {
@@ -110,11 +114,39 @@ productsRouter.post("/create", async (req, res) => {
     }
 });
 
+// old product create route (with file transfer)
+productsRouter.post("/create2", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
+    try {
+        const images = [];
+        let product, body;
+        for (const file of req.files){
+            if (file.fieldname == "product"){
+                body = JSON.parse(fs.readFileSync(file.path).toString());
+                product = body.product;
+            } else if (file.fieldname == "image"){
+                images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+            }
+        }
+        const user = await User.findOne({ uid: body.user_uid });
+        if (!user._id) { throw "User uid not found" }
+        product["user_id"] = user._id;
+
+        product.pictures = images;
+        product = await getCoordinates(product);
+        //product = getThumbnail(product);
+        const newProduct = await Product.create(product);
+        res.status(200).json({status: "success", productId: newProduct._id});
+    } catch(e) {
+        console.log("Error in post product: ", e);
+        res.status(500).json({message:e});
+    }
+});
+
 //get a specific product
 productsRouter.get("/product/:productId", async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
-        res.status(200).json(product);
+        res.status(200).send(product);
     } catch (e) {
         res.status(500).json({ message: e });
     }
@@ -138,17 +170,28 @@ productsRouter.delete("/product/delete/:productId", async (req, res) => {
 });
 
 //Update a specific product
-productsRouter.put("/product/update/:productId", async (req, res) => {
+productsRouter.put("/product/update/:productId", upload.any(), upload.single("product"), async (req, res) => {
     try {
-        let product = req.body.product;
-        const user = await User.findOne({uid: req.body.uid});
-        if (user._id != product.user_id){
-            throw "incorrect user identification";
-        } else {
-            product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
-            await Product.replaceOne({ _id: req.params.productId }, product);
-            res.status(200).json({ status: "success" }); // maybe rather return the edited product, but Product.replaceOne does not return that.
+        const images = [];
+        let product, body;
+        for (const file of req.files){
+            if (file.fieldname == "product"){
+                body = JSON.parse(fs.readFileSync(file.path).toString());
+                product = body.product;
+            } else if (file.fieldname == "image"){
+                images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+            }
         }
+        const user = await User.findOne({uid: body.user_uid}); // add uid later
+        const oldProduct = await Product.findOne({_id: req.params.productId});
+        if (user._id != oldProduct.user_id){
+            throw "incorrect user identification";
+        }
+        product["user_id"] = user._id
+        product.pictures = images;
+        product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
+        await Product.replaceOne({ _id: req.params.productId }, product);
+        res.status(200).json({ status: "success" }); // maybe rather return the edited product, but Product.replaceOne does not return that.
     } catch (e) {
         res.status(500).json({ message: e });
     }

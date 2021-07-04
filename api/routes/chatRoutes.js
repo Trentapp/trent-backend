@@ -38,7 +38,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 
 				const chat = {
 					"lender": product.user_id,
-					"borrower": (product.user_id == user_id) ? req.body.recipient : product.user_id,
+					"borrower": (product.user_id == user_id) ? req.body.recipient : user_id,
 					"item_id": req.body.item_id,
 					"messages": [message]
 				}
@@ -98,5 +98,17 @@ chatRouter.get("/chat/:id", async (req,res) => {
 	}
 })
 
+//attention: if that method is called and the corresponding chat does not exist yet, the chat is created
+chatRouter.get("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
+	try {
+		const chat = await Chat.findOne({$and: [{lender: req.params.lenderId}, {borrower: req.params.borrowerId}, {item_id: req.params.productId}] });
+		if (!chat){
+			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, item_id: req.params.productId, messages: []});//this somehow not may be returned properly
+		}
+		res.status(200).json(chat);
+	} catch (e) {
+		res.status(500).json({ message: e });
+	}
+})
 
 export default chatRouter;
