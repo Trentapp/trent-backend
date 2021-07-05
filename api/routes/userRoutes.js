@@ -50,7 +50,7 @@ userRouter.put("/update", async (req, res) => {
         updatedUser["transactions_borrower"] = user.transactions_borrower;
         updatedUser["mail"] = user.mail;
 
-        await User.replaceOne({ uid: req.body.user.uid }, req.body.user);
+        await User.replaceOne({ uid: req.body.user.uid }, req.body.user);// maybe change to updateOne later
         res.status(200).json({ status: "success" });
     } catch (e) {
         res.status(500).json({ message: e });

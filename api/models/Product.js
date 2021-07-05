@@ -24,7 +24,10 @@ const ProductSchema = mongoose.Schema({ //to be extended
     },
     prices:{
         perHour: Number,//saying everything is in € for the beginning
-        perDay: Number
+        perDay: {
+            type: Number,
+            required: true,
+        },//add sth like currency later
     },
     location: {
         type: { type: String },
