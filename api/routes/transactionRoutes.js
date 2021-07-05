@@ -71,7 +71,7 @@ transactionRouter.get("/findByLender/:user_id", async (req,res) => {
 
 transactionRouter.get("/findByBorrower/:user_id", async (req,res) => {
 	try {
-		const transactions = await Transaction.find({$and: [{lender: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]}).populate([{path: 'item', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		const transactions = await Transaction.find({$and: [{borrower: req.params.user_id}, {end_date: {$gte: new Date()}}, {granted: {$ne: 1}}]}).populate([{path: 'item', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
 		res.status(200).json(transactions);
 	} catch (e) {
 		res.status(500).json({ message: e });
@@ -91,11 +91,11 @@ transactionRouter.get("/findPastTransactions/:user_id", async (req,res) => {
 transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put the granted code into req.body.granted // (also pass uid in body)
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const transaction = await Transaction.findById(req.params.id);
-		if (user._id == transaction.borrower && req.body.granted == 1) { //the borrower can only cancel a request
+		const transaction = await Transaction.findById(req.params.id).populate([{path: 'item', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		if (JSON.stringify(user._id) == JSON.stringify(transaction.borrower._id) && req.body.granted == 1) { //the borrower can only cancel a request
 			await Transaction.updateOne({_id: req.params.id}, {granted: 1});
 		}
-		else if (user._id == transaction.lender){
+		else if (user._id == transaction.lender._id){
 			if (req.body.granted == 2 && transaction.granted == 0){
 				await Transaction.updateOne({_id: req.params.id}, {granted: 2});
 			} else if (req.body.granted == 1){
@@ -106,7 +106,7 @@ transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put 
 	} catch (e) {
 		res.status(500).json({ message: e });
 	}
-})
+});
 
 
 export default transactionRouter;

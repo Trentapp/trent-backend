@@ -46,9 +46,10 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like time, ... (maybe min_price xD)
     if (req.query.inventory_user_id) { //alternative: go through user.inventory (I think it is not that much more efficient)
-        queryConds.push({ user_id: req.query.inventory_user_id });
+        queryConds.push({ 'user._id': req.query.inventory_user_id });
     }
     try {
+        console.log(queryConds);
         const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'Users', select:['name']}]).skip(productsPerPage*page).limit(productsPerPage);//(other order may be slightly more efficient (populate at the end))
         res.status(200).json(products);
     } catch (e) {
