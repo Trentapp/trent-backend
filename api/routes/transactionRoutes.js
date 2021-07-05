@@ -9,12 +9,11 @@ const transactionRouter = express.Router();
 transactionRouter.post("/sendRequest", async (req, res) => {//I would change the name of that route
 	try {
 		if (!req.body.user_uid || !req.body.product_id || !req.body.start_date || !req.body.end_date) { throw "Missing parameters"; }
-
 		const user = await User.findOne({ uid: req.body.user_uid });
 		const user_id = user._id;
 		if (!user_id) { throw "User uid not found" }
-		const product = await Product.findById(req.body.product_id);
-		const lender_id = product.user_id;
+		const product = await Product.findById(req.body.product_id).populate([{path: "user", model:'Users', select:['name']}]);
+		const lender_id = product.user._id;
 		if (!lender_id) { console.log("Lender id not found"); throw "Lender id not found"; }
 		if (lender_id == user_id) { console.log("Invalid operation: Lender can not be the same user as borrower"); throw "Invalid operation: Lender can not be the same user as borrower" }
 		const [d_end, d_start] = [new Date(req.body.end_date), new Date(req.body.start_date)];
@@ -23,8 +22,12 @@ transactionRouter.post("/sendRequest", async (req, res) => {//I would change the
 			console.log("Start date is after End Date");
 			throw "Start Date must be before End Date";
 		}
-		const total_price = Math.ceil(diffMilliSeconds/(1000*60*60*24)) * product.prices.perDay;
-		//const total_price_per_Hour = (diffMilliseconds/(1000*60*60)) * item.prices.perHour;
+		let total_price;
+		if (product.prices.perHour){
+			total_price = Math.min(Math.ceil(diffMilliSeconds/(1000*60*60*24)) * product.prices.perDay, Math.ceil(diffMilliSeconds/(1000*60*60)) * product.prices.perHour);
+		} else {
+			total_price = Math.ceil(diffMilliSeconds/(1000*60*60*24)) * product.prices.perDay;
+		}
 
 		const transaction = {
 			"borrower": user_id,
@@ -35,9 +38,7 @@ transactionRouter.post("/sendRequest", async (req, res) => {//I would change the
 			"granted": 0,
 			"total_price": total_price
 		};
-
 		const newTransaction = await Transaction.create(transaction);
-
 		await User.updateOne({_id: user_id}, { $push: { transactions_borrower: newTransaction._id } });
 		await User.updateOne({_id: lender_id}, { $push: { transactions_lender: newTransaction._id } });
 
