@@ -115,7 +115,7 @@ productsRouter.post("/create", async (req, res) => {
     }
 });
 
-// old product create route (with file transfer)
+
 productsRouter.post("/create2", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
     try {
         const images = [];
@@ -136,6 +136,7 @@ productsRouter.post("/create2", upload.any(), upload.single("body"), async (req,
         product = await getCoordinates(product);
         //product = getThumbnail(product);
         const newProduct = await Product.create(product);
+        await User.updateOne({ _id: user._id }, { $push: { inventory: newProduct._id } });
         res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
         console.log("Error in post product: ", e);
