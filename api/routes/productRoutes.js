@@ -49,9 +49,9 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         queryConds.push({ 'user._id': req.query.inventory_user_id });
     }
     try {
-        console.log(queryConds);
+        //console.log(queryConds);
         const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'Users', select:['name']}]).skip(productsPerPage*page).limit(productsPerPage);//(other order may be slightly more efficient (populate at the end))
-        res.status(200).json(products);
+        res.status(200).json(products.map(product => ({_id: product._id, name: product.name, desc: product.desc, prices: product.prices, location: product.location, address: product.address, user: product.user, thumbnail: product.thumbnail})));
     } catch (e) {
         res.status(500).json({ message: e });
     }
