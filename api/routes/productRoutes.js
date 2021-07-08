@@ -157,12 +157,12 @@ productsRouter.get("/product/:productId", async (req, res) => {
 //delete a specific product
 productsRouter.delete("/product/delete/:productId", async (req, res) => {
     try {
-        const product = await Product.findById(req.params.productId);
+        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'Users', select:['name']}]);
         const user = await User.findOne({uid: req.body.uid});
-        if (user._id != product.user_id) {
+        if (user._id != product.user._id) {
             throw "incorrect user identification";
         } else {
-            await User.updateOne({ _id: product.user_id }, { $pullAll: { inventory: [req.params.productId] } });
+            await User.updateOne({ _id: product.user._id }, { $pullAll: { inventory: [req.params.productId] } });
             await Product.deleteOne({ _id: req.params.productId });
         }
         res.status(200).json({ status: "success" });
@@ -185,8 +185,8 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
             }
         }
         const user = await User.findOne({uid: body.user_uid}); // add uid later
-        const oldProduct = await Product.findOne({_id: req.params.productId});
-        if (user._id != oldProduct.user_id){
+        const oldProduct = await Product.findOne({_id: req.params.productId}).populate([{path:'user', model:'Users', select:['name']}]);
+        if (JSON.stringify(user._id) != JSON.stringify(oldProduct.user._id)){
             throw "incorrect user identification";
         }
         product["user"] = user._id
