@@ -17,32 +17,31 @@ chatRouter.post("/sendMessage", async (req, res) => {
 
 		const message = {
 			"timestamp": new Date().getTime(), //not totally sure but I think we don't want the .getTime(), because I think it deletes the Date information, but no time for that now
-			"sender": user._id,
+			"sender": user_id,
 			"content": req.body.content,
 			"read": false
 		};
 
 		if (req.body.chat_id) {// I would put that into a put("/updateChat/:id") route, but not important
-			const chat = await Chat.findById(req.body.chat_id);
-			if (chat.borrower != user_id && chat.lender != user_id) { throw "User not authorized"; }
+			const chat = await Chat.findById(req.body.chat_id).populate([{path: 'item', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
+			if (chat.borrower._id != user_id && chat.lender._id != user_id) { throw "User not authorized"; }
 
 			await Chat.findByIdAndUpdate(req.body.chat_id, { $push: { messages: message } });
 		} else {
-			const existingChat = await Chat.findOne({ $and: [{ item_id: req.body.item_id }, { $or: [{ borrower: user_id }, { lender: user_id }] }] });
+			const existingChat = await Chat.findOne({ $and: [{ 'item': req.body.item_id }, { $or: [{ 'borrower': user_id }, { 'lender': user_id }] }] }).populate([{path: 'item', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 			if (existingChat) {
 				existingChat.messages.push(message);
 				existingChat.save();
 			} else {
-				const product = await Product.findById(req.body.item_id);
-				if (product.user_id == user_id && !req.body.recipient) { throw "missing parameters"; }
+				const product = await Product.findById(req.body.item_id).populate([{path:'user', model:'Users', select:['name']}]);
+				if (product.user._id == user_id && !req.body.recipient) { throw "missing parameters"; }
 
 				const chat = {
-					"lender": product.user_id,
-					"borrower": (product.user_id == user_id) ? req.body.recipient : user_id,
-					"item_id": req.body.item_id,
+					"lender": product.user._id,
+					"borrower": (product.user._id == user_id) ? req.body.recipient : user_id,
+					"item": req.body.item_id,
 					"messages": [message]
 				}
-
 				const newChat = await Chat.create(chat);
 			}
 		}
@@ -56,6 +55,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 
 
 // get should definitely be implemented as http GET request. We can put the uid into the route (/get/:uid) (I think it is not dangerous if you thought that)
+// can we delete that function, or are you still using it?
 chatRouter.post("/get", async (req, res) => {
 	try {
 		console.log("body passed into /chats/get : ", req.body);
@@ -101,9 +101,11 @@ chatRouter.get("/chat/:id", async (req,res) => {
 //attention: if that method is called and the corresponding chat does not exist yet, the chat is created
 chatRouter.get("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
 	try {
-		const chat = await Chat.findOne({$and: [{lender: req.params.lenderId}, {borrower: req.params.borrowerId}, {item_id: req.params.productId}] });
+		let chat = await Chat.findOne({$and: [{'lender': req.params.lenderId}, {'borrower': req.params.borrowerId}, {'item': req.params.productId}] });
 		if (!chat){
-			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, item_id: req.params.productId, messages: []});//this somehow not may be returned properly
+			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, item: req.params.productId, messages: []});//this somehow not may be returned properly
+		} else {
+			await chat.populate([{path: 'item', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 		}
 		res.status(200).json(chat);
 	} catch (e) {

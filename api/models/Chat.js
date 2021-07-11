@@ -2,7 +2,8 @@ import mongoose from "mongoose"
 
 export const MessageSchema = mongoose.Schema({
 	sender: {
-		type: String,
+		type: mongoose.Schema.Types.ObjectId,
+		ref: "Users",
 		required: true
 	},
     timestamp: {
