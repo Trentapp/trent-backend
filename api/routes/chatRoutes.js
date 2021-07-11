@@ -24,14 +24,13 @@ chatRouter.post("/sendMessage", async (req, res) => {
 
 		if (req.body.chat_id) {// I would put that into a put("/updateChat/:id") route, but not important
 			const chat = await Chat.findById(req.body.chat_id).populate([{path: 'item', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
-			if (chat.borrower._id != user_id && chat.lender._id != user_id) { throw "User not authorized"; }
-
+			if (JSON.stringify(chat.borrower._id) != JSON.stringify(user_id) && JSON.stringify(chat.lender._id) != JSON.stringify(user_id)) { throw "User not authorized"; }
 			await Chat.findByIdAndUpdate(req.body.chat_id, { $push: { messages: message } });
 		} else {
-			const existingChat = await Chat.findOne({ $and: [{ 'item': req.body.item_id }, { $or: [{ 'borrower': user_id }, { 'lender': user_id }] }] }).populate([{path: 'item', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
+			// not perfectly tested yet, I hope there is no problem if req.body.recipient is undefined
+			const existingChat = await Chat.findOne({ $and: [{ 'item': req.body.item_id }, { $or: [{ 'borrower': user_id }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'item', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 			if (existingChat) {
-				existingChat.messages.push(message);
-				existingChat.save();
+				await Chat.findByIdAndUpdate(existingChat._id, { $push: { messages: message } });
 			} else {
 				const product = await Product.findById(req.body.item_id).populate([{path:'user', model:'Users', select:['name']}]);
 				if (product.user._id == user_id && !req.body.recipient) { throw "missing parameters"; }
