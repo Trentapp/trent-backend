@@ -23,10 +23,10 @@ userRouter.post("/create", async (req, res) => {
 });
 
 // get private profile
-userRouter.get("/user/:uid", async (req, res) => {
+userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.params.uid }).orFail();
+        const user = await User.findOne({ uid: req.body.uid }).orFail();
         Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
         res.status(200).json(user);
     } catch (e) {

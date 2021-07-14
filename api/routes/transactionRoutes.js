@@ -56,10 +56,15 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 	}
 });
 
-transactionRouter.get("/transaction/:id", async (req,res) => {
+// get transaction by id
+transactionRouter.post("/transaction/:id", async (req,res) => {
 	Logger.shared.log(`Getting transaction with id: ${req.params.id}`);
 	try {
+		const user = await User.findOne({uid: req.body.uid});
 		const transaction = await Transaction.findById(req.params.id).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		if (!user || (transaction.borrower._id != user._id && transaction.lender._id != user._id)){
+			throw "No access to transaction!";
+		}
 		Logger.shared.log(`Got transaction successfully`);
 		res.status(200).json(transaction);
 	} catch (e) {
@@ -71,46 +76,48 @@ transactionRouter.get("/transaction/:id", async (req,res) => {
 //small problem: If someone goes to the backend API, he could see all the transactions for a user, so perhaps change query by user._id to query by user.uid, but not high priority
 
 //find by lender and find by borrower now only return current transactions (not cancelled and not enddate < now)
-transactionRouter.get("/findByLender/:userId", async (req,res) => {
-	Logger.shared.log(`Getting transaction for lender with id: ${req.params.userId}`);
+transactionRouter.get("/findByLender", async (req,res) => {
+	Logger.shared.log(`Getting transaction for lender`);
 	try {
-		const transactions = await Transaction.find({$and: [{lender: req.params.userId}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
-		Logger.shared.log(`Successfully got transaction for lender with id: ${req.params.userId}`);
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{lender: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		Logger.shared.log(`Successfully got transaction for lender with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for lender with id: ${req.params.userId}`, 1);
+		Logger.shared.log(`Failed getting transaction for lender with id: ${user._id}`, 1);
 		res.status(500).json({ message: e });
 	}
 });
 
 transactionRouter.post("/findByBorrower", async (req,res) => {
 	try {
-		Logger.shared.log(`Getting transaction for borrower with id: ${req.body.uid}`);
-		const user = await User.findOne({uid: req.body.uid});
+		Logger.shared.log(`Getting transaction for borrower`);
 		if (!user) {
+			const user = await User.findOne({uid: req.body.uid});
 			const transactions = await Transaction.find({$and: [{borrower: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
 		} else {
 			Logger.shared.log(`User not found`, 1);
 			throw "User not authorized";
 		}
 
-		Logger.shared.log(`Successfully got transaction for borrower with id: ${req.params.userId}`);
+		Logger.shared.log(`Successfully got transaction for borrower with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for borrower with id: ${req.params.userId}`, 1);
+		Logger.shared.log(`Failed getting transaction for borrower with id: ${user._id}`, 1);
 		res.status(500).json({ message: e });
 	}
 });
 
 //findPastTransactions returns all transactions of a user that were cancelled ore where enddate < now
-transactionRouter.get("/findPastTransactions/:userId", async (req,res) => {
-	Logger.shared.log(`Getting past transaction for user with id: ${req.params.userId}`);
+transactionRouter.post("/findPastTransactions", async (req,res) => {
+	Logger.shared.log(`Getting past transaction for user`);
 	try {
-		const transactions = await Transaction.find({$and: [{$or: [{lender: req.params.userId}, {borrower: req.params.userId}]}, {$or: [{endDate: {$lt: new Date()}}, {status: 1}]}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
-		Logger.shared.log(`Successfully got past transaction for user with id: ${req.params.userId}`);
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{$or: [{lender: user._id}, {borrower: user._id}]}, {$or: [{endDate: {$lt: new Date()}}, {status: 1}]}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		Logger.shared.log(`Successfully got past transaction for user with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting past transaction for user with id: ${req.params.userId}`, 1);
+		Logger.shared.log(`Failed getting past transaction for user with id: ${user._id}`, 1);
 		res.status(500).json({ message: e });
 	}
 });
