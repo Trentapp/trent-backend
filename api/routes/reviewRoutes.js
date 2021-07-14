@@ -51,16 +51,6 @@ reviewRouter.get("/user/:id", async (req, res) => {
     try {
         Logger.shared.log(`Requesting reviews of user with id ${req.params.id}`);
         let reviews = await Review.find({ ratedUserId: req.params.id}).populate([{path:'ratedUser', model:'Users', select:['name']}, {path:'poster', model:'Users', select:['name']}]);
-        // for(let i = 0; i < reviews.length; i++) {
-        //   // TODO: if that fails just continue
-        //   let review = reviews[i];
-        //   const poster = await User.findById(review.posterId);
-        //   console.log(poster.name);
-        //   // review.posterName = poster.name;
-        //   review["style"] = "10/10";
-        //   console.log(review);
-        //   reviews[i] = review;
-        // }
         Logger.shared.log(`Successfully sent reviews of user with id ${req.params.id}`);
         res.status(200).json(reviews);
     } catch(e) {

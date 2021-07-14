@@ -16,11 +16,11 @@ const TransactionSchema = mongoose.Schema({ //to be extended
       ref: 'Products',
       required: true
     },
-	start_date: {
+	startDate: {
 		type: Date,
 		required: true
 	},
-	end_date:{
+	endDate:{
 		type: Date,
 		required: true
 	},
@@ -28,7 +28,7 @@ const TransactionSchema = mongoose.Schema({ //to be extended
 		type: Number, // 0 means "no response yet", 1 means "rejected" (or cancelled) and 2 means "accepted" // (or should we do an extra state for cancelled by user?)
 		required: true
 	},
-	total_price: {
+	totalPrice: {
 		type: Number,
 		required: true
 	}

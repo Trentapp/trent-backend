@@ -13,7 +13,7 @@ userRouter.post("/create", async (req, res) => {
   Logger.shared.log(`Creating new user`);
     try {
         let user = req.body.user; //I would submit the user data in the request directly, so the new req.body is the old req.body.user
-        await User.create({ ...user, inventory: [], transactions_lender: [], transactions_borrower: [], rating: 0, numberOfRatings: 0 }); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
+        await User.create({ ...user, inventory: [], transactionsLender: [], transactionsBorrower: [], rating: 0, numberOfRatings: 0 }); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
         Logger.shared.log(`Successfully created new user`);
         res.status(200).json({ status: "success" });
     } catch (e) {
@@ -58,8 +58,8 @@ userRouter.put("/update", async (req, res) => {
 
         updatedUser["_id"] = user._id;
         updatedUser["inventory"] = user.inventory;
-        updatedUser["transactions_lender"] = user.transactions_lender;
-        updatedUser["transactions_borrower"] = user.transactions_borrower;
+        updatedUser["transactionsLender"] = user.transactionsLender;
+        updatedUser["transactionsBorrower"] = user.transactionsBorrower;
         updatedUser["mail"] = user.mail;
 
         await User.replaceOne({ uid: req.body.user.uid }, req.body.user);// maybe change to updateOne later
@@ -75,8 +75,8 @@ userRouter.delete("/delete", async (req, res) => {
   Logger.shared.log(`Deleting public user profile with id ${req.body.user._id}`);
     try {
         const user = await User.findOne({ uid: req.body.uid });
-        const user_id = user._id;
-        await Product.deleteMany({ user_id: user_id });//deletes all products of that user
+        const userId = user._id;
+        await Product.deleteMany({ userId: userId });//deletes all products of that user
         await User.deleteOne({ uid: req.body.uid });
         res.status(200).json({ message: "success" });
         Logger.shared.log(`Successfully deleted user profile with id ${req.body.user._id}`);

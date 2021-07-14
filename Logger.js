@@ -21,6 +21,7 @@ class Logger {
 
 		let content = "[" + date_string + "]" + " " + this.prefixes[prefix] + message + "\n";
 
+		console.log(content);
 		fs.writeFile('./server.log', content, { flag: 'a+' }, err => {})
 	}
 

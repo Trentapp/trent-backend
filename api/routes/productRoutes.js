@@ -48,8 +48,8 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         queryConds.push({ 'prices.perHour': { $lte: req.query.hour_price_max } });
         filters.hour_price_max = req.query.hour_price_max;
     } // add more filter options later, like time, ... (maybe min_price xD)
-    if (req.query.inventory_user_id) { //alternative: go through user.inventory (I think it is not that much more efficient)
-        queryConds.push({ 'user._id': req.query.inventory_user_id });
+    if (req.query.inventory_userId) { //alternative: go through user.inventory (I think it is not that much more efficient)
+        queryConds.push({ 'user._id': req.query.inventory_userId });
     }
     try {
         //console.log(queryConds);
@@ -97,30 +97,8 @@ const getThumbnail = (product) => {
         })
 }
 
-// productsRouter.post("/create", async (req, res) => {
-//     try {
-//         let product = req.body.product; // I would add uid to product before making the request and pass the product directly as req.body
-//         //please make sure that req.body.product already contains the uid, so it is also added to product.
-//         if (!req.body.user_uid) { throw "No user uid" }
-//         const user = await User.findOne({ uid: req.body.user_uid });
-//         const user_id = user._id;
-//         if (!user_id) { throw "User uid not found" }
-//
-//         product = await getCoordinates(product);
-//         product["user"] = user_id;
-//         // product = getThumbnail(product);
-//         const newProduct = await Product.create(product);
-//
-//         await User.updateOne({ _id: user_id }, { $push: { inventory: newProduct._id } });
-//
-//         res.status(200).json({ status: "success", productId: newProduct._id });
-//     } catch (e) {
-//         res.status(500).json({ message: e });
-//     }
-// });
 
-
-productsRouter.post("/create2", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
+productsRouter.post("/create", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
   Logger.shared.log(`Uploading new product started`)
     try {
         const images = [];
@@ -135,7 +113,7 @@ productsRouter.post("/create2", upload.any(), upload.single("body"), async (req,
                 images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
             }
         }
-        const user = await User.findOne({ uid: body.user_uid });
+        const user = await User.findOne({ uid: body.uid });
         if (!user._id) { Logger.shared.log(`User uid not found`, 1); throw "User uid not found"; }
         product["user"] = user._id;
 
@@ -200,7 +178,7 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
                 images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
             }
         }
-        const user = await User.findOne({uid: body.user_uid}); // add uid later
+        const user = await User.findOne({uid: body.uid}); // add uid later
         const oldProduct = await Product.findOne({_id: req.params.productId}).populate([{path:'user', model:'Users', select:['name']}]);
         if (JSON.stringify(user._id) != JSON.stringify(oldProduct.user._id)){
             Logger.shared.log(`User updating product with id ${req.params.productId} could not be verified`, 1);
