@@ -9,8 +9,8 @@ const transactionRouter = express.Router();
 
 
 transactionRouter.post("/createTransaction", async (req, res) => {
-	const log_body = req.body;
-	log_body["uid"] = "*censored*";
+	const logBody = req.body;
+	logBody["uid"] = "*censored*";
 	Logger.shared.log(`Sending transaction Request ${req.body}`);
 	try {
 		if (!req.body.uid || !req.body.productId || !req.body.startDate || !req.body.endDate) { throw "Missing parameters"; }
@@ -21,8 +21,8 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		const lenderId = product.user._id;
 		if (!lenderId) { Logger.shared.log(`Lender not found`, 1); console.log("Lender id not found"); throw "Lender id not found"; }
 		if (lenderId == userId) { Logger.shared.log(`Lender cannot be same user as borrower`, 1); console.log("Invalid operation: Lender can not be the same user as borrower"); throw "Invalid operation: Lender can not be the same user as borrower" }
-		const [d_end, d_start] = [new Date(req.body.endDate), new Date(req.body.startDate)];
-		const diffMilliSeconds = d_end - d_start;
+		const [endDate, startDate] = [new Date(req.body.endDate), new Date(req.body.startDate)];
+		const diffMilliSeconds = endDate - startDate;
 		if (diffMilliSeconds < 0){
 			Logger.shared.log(`Invalid date: End date must be after start date`, 1);
 			console.log("Start date is after End Date");

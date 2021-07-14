@@ -23,8 +23,8 @@ reviewRouter.post("/create", async (req,res) => { //maybe change that so the pos
             const newReview = await Review.create(req.body.review);//this is dangerous! An update should only occur if everything works (otherwise it can throw an error and still partially update). Fix that later.
             Logger.shared.log(`Successfully created review ${newReview}`);
             const owner = await User.findById(req.body.review.ratedUser._id);
-            const new_user_rating = (owner.rating * owner.numberOfRatings + req.body.review.stars)/(owner.numberOfRatings + 1);// I hope we don't get rounding errors
-            await User.findByIdAndUpdate(owner._id, {rating: new_user_rating, numberOfRatings: (owner.numberOfRatings + 1)});
+            const newUserRating = (owner.rating * owner.numberOfRatings + req.body.review.stars)/(owner.numberOfRatings + 1);// I hope we don't get rounding errors
+            await User.findByIdAndUpdate(owner._id, {rating: newUserRating, numberOfRatings: (owner.numberOfRatings + 1)});
             Logger.shared.log(`Successfully updated reviewed User`);
             res.status(200).json({status: "success"});
         }
@@ -72,8 +72,8 @@ reviewRouter.put("/update/:id", async (req, res) => {
             await Review.replaceOne({_id: req.params.id}, req.body.review);
             const difference = req.body.review.stars - oldReview.stars;
             const owner = await User.findById(req.body.review.ratedUserId);
-            const new_user_rating = owner.rating + difference * (1/owner.numberOfRatings);
-            await User.findByIdAndUpdate(owner._id, {rating: new_user_rating});
+            const newUserRating = owner.rating + difference * (1/owner.numberOfRatings);
+            await User.findByIdAndUpdate(owner._id, {rating: newUserRating});
             res.status(200).json({status: "success"});
             Logger.shared.log(`Successfully updated review with id ${req.params.id}`);
         }

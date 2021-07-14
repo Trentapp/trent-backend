@@ -25,7 +25,7 @@ const productsRouter = express.Router();
 
 // the default prefix of every route in that file is /api/products
 // getting products
-productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&day_price_max=23
+productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&dayPriceMax=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
     Logger.shared.log(`Querying for /products/ with ${req.params}`);
     const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 20;
@@ -40,16 +40,16 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
     if (req.query.lat && req.query.lng) {
         queryConds.push({ location: { $geoWithin: { $centerSphere: [[req.query.lng, req.query.lat], 5/6371] } } }) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
     }
-    if (req.query.day_price_max) {
-        queryConds.push({ 'prices.perDay': { $lte: req.query.day_price_max } });
-        filters.day_price_max = req.query.day_price_max;
+    if (req.query.dayPriceMax) {
+        queryConds.push({ 'prices.perDay': { $lte: req.query.dayPriceMax } });
+        filters.dayPriceMax = req.query.dayPriceMax;
     }
-    if (req.query.hour_price_max) {
-        queryConds.push({ 'prices.perHour': { $lte: req.query.hour_price_max } });
-        filters.hour_price_max = req.query.hour_price_max;
+    if (req.query.hourPriceMax) {
+        queryConds.push({ 'prices.perHour': { $lte: req.query.hourPriceMax } });
+        filters.hourPriceMax = req.query.hourPriceMax;
     } // add more filter options later, like time, ... (maybe min_price xD)
-    if (req.query.inventory_userId) { //alternative: go through user.inventory (I think it is not that much more efficient)
-        queryConds.push({ 'user._id': req.query.inventory_userId });
+    if (req.query.inventoryUserId) { //alternative: go through user.inventory (I think it is not that much more efficient)
+        queryConds.push({ 'user._id': req.query.inventoryUserId });
     }
     try {
         //console.log(queryConds);
