@@ -53,8 +53,8 @@ chatRouter.post("/sendMessage", async (req, res) => {
 });
 
 
-// get should definitely be implemented as http GET request. We can put the uid into the route (/get/:uid) (I think it is not dangerous if you thought that)
 // can we delete that function, or are you still using it?
+// get should definitely be implemented as http GET request. We can put the uid into the route (/get/:uid) (I think it is not dangerous if you thought that)
 chatRouter.post("/get", async (req, res) => {
 	try {
 		console.log("body passed into /chats/get : ", req.body);
