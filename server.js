@@ -33,11 +33,10 @@ app.get("/", (req, res) => {
 });
 
 mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
-    .then(() => { console.log("connected to DB!"); Logger.shared.log(`Connected to DB`) })
-    .catch(err => { console.log("Failed to connect to DB: ", err); Logger.shared.log(`Failed to connect to DB`, 1)});
+    .then(() => Logger.shared.log(`Connected to DB`))
+    .catch(err => Logger.shared.log(`Failed to connect to DB`, 1));
 mongoose.set('useFindAndModify', false); // Should we use findAndModify instead?
 
 app.listen(port, () => {
-    console.log("listening on port ", port);
     Logger.shared.log(`Server started; listening on port ${port}`)
 });
