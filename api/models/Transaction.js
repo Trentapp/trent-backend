@@ -11,7 +11,7 @@ const TransactionSchema = mongoose.Schema({ //to be extended
       ref: 'Users',
       required: true
     },
-	item: {
+	product: {
       type: mongoose.Schema.ObjectId,
       ref: 'Products',
       required: true
@@ -24,7 +24,7 @@ const TransactionSchema = mongoose.Schema({ //to be extended
 		type: Date,
 		required: true
 	},
-	granted: { //maybe rename granted (to status or so)
+	status: { //maybe rename status (to status or so)
 		type: Number, // 0 means "no response yet", 1 means "rejected" (or cancelled) and 2 means "accepted" // (or should we do an extra state for cancelled by user?)
 		required: true
 	},

@@ -29,7 +29,7 @@ const ChatSchema = mongoose.Schema({
 		type: String,
 		required: true
 	},
-	item: {
+	product: {
 		type: String,
 		required: true
 	},

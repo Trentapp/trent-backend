@@ -21,7 +21,7 @@ const geocoder = NodeGeocoder(options);
 
 const productsRouter = express.Router();
 
-//// product stuff // Maybe we should rename everything to item instead of product. But we should take care of the database collection and it actually is not that important.
+//// product stuff // Maybe we should rename everything to product instead of product. But we should take care of the database collection and it actually is not that important.
 
 // the default prefix of every route in that file is /api/products
 // getting products
