@@ -107,9 +107,9 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
             if (file.fieldname == "product"){
                 body = JSON.parse(fs.readFileSync(file.path).toString());
                 product = body.product;
-                Logger.shared.log(`Creating new product: ${req.body.product}`);
+                Logger.shared.log(`Received product information successfully`);
             } else if (file.fieldname == "image"){
-                Logger.shared.log(`Received image for product: ${req.body.product.name}`);
+                Logger.shared.log(`Received image for product`);
                 images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
             }
         }
@@ -122,11 +122,11 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
         //product = getThumbnail(product);
         const newProduct = await Product.create(product);
         await User.updateOne({ _id: user._id }, { $push: { inventory: newProduct._id } });
-        Logger.shared.log(`Successfully created product: ${req.body.product.name} with id ${newProduct._id}`);
+        Logger.shared.log(`Successfully created product with id ${newProduct._id}`);
         res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
         console.log("Error in post product: ", e);
-        Logger.shared.log(`Could not create prodcut: ${req.body.product.name}: {e}`, 1);
+        Logger.shared.log(`Could not create prodcut: ${e}`, 1);
         res.status(500).json({message:e});
     }
 });
@@ -149,7 +149,7 @@ productsRouter.delete("/product/delete/:productId", async (req, res) => {
         Logger.shared.log(`Deleting product with id ${req.params.productId}`);
         const product = await Product.findById(req.params.productId).populate([{path:'user', model:'Users', select:['name']}]);
         const user = await User.findOne({uid: req.body.uid});
-        if (user._id != product.user._id) {
+        if (JSON.stringify(user._id) != JSON.stringify(product.user._id)) {
             Logger.shared.log(`User deleting product with id ${req.params.productId} could not be verified`, 1);
             throw "incorrect user identification";
         } else {

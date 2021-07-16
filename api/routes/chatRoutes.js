@@ -60,7 +60,6 @@ chatRouter.post("/sendMessage", async (req, res) => {
 chatRouter.post("/getChatsOfUser", async (req, res) => {
 	Logger.shared.log(`Getting chats using /chats/get`);
 	try {
-		console.log("body passed into /chats/get : ", req.body);
 		if (!req.body.uid) { throw "Missing parameters"; }
 
 		const user = await User.findOne({ uid: req.body.uid });

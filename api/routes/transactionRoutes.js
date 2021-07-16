@@ -9,23 +9,21 @@ const transactionRouter = express.Router();
 
 
 transactionRouter.post("/createTransaction", async (req, res) => {
-	const logBody = req.body;
-	logBody["uid"] = "*censored*";
-	Logger.shared.log(`Sending transaction Request ${req.body}`);
+	Logger.shared.log(`Sending transaction Request`);
 	try {
 		if (!req.body.uid || !req.body.productId || !req.body.startDate || !req.body.endDate) { throw "Missing parameters"; }
 		const user = await User.findOne({ uid: req.body.uid });
+		console.log(req.body.uid, user);
 		const userId = user._id;
 		if (!userId) { Logger.shared.log(`Could not authenticate user`, 1); throw "User uid not found" }
 		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'Users', select:['name']}]);
 		const lenderId = product.user._id;
-		if (!lenderId) { Logger.shared.log(`Lender not found`, 1); console.log("Lender id not found"); throw "Lender id not found"; }
-		if (lenderId == userId) { Logger.shared.log(`Lender cannot be same user as borrower`, 1); console.log("Invalid operation: Lender can not be the same user as borrower"); throw "Invalid operation: Lender can not be the same user as borrower" }
+		if (!lenderId) { Logger.shared.log(`Lender not found`, 1); throw "Lender id not found"; }
+		if (lenderId == userId) { Logger.shared.log(`Lender cannot be same user as borrower`, 1); throw "Invalid operation: Lender can not be the same user as borrower" }
 		const [endDate, startDate] = [new Date(req.body.endDate), new Date(req.body.startDate)];
 		const diffMilliSeconds = endDate - startDate;
 		if (diffMilliSeconds < 0){
 			Logger.shared.log(`Invalid date: End date must be after start date`, 1);
-			console.log("Start date is after End Date");
 			throw "Start Date must be before End Date";
 		}
 		let totalPrice;
@@ -45,6 +43,8 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 			"totalPrice": totalPrice
 		};
 		const newTransaction = await Transaction.create(transaction);
+
+		//are the transactionsBorrower and transactionsLender lists useful? (For what?)
 		await User.updateOne({_id: userId}, { $push: { transactionsBorrower: newTransaction._id } });
 		await User.updateOne({_id: lenderId}, { $push: { transactionsLender: newTransaction._id } });
 
@@ -76,7 +76,7 @@ transactionRouter.post("/transaction/:id", async (req,res) => {
 //small problem: If someone goes to the backend API, he could see all the transactions for a user, so perhaps change query by user._id to query by user.uid, but not high priority
 
 //find by lender and find by borrower now only return current transactions (not cancelled and not enddate < now)
-transactionRouter.get("/findByLender", async (req,res) => {
+transactionRouter.post("/findByLender", async (req,res) => {
 	Logger.shared.log(`Getting transaction for lender`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
@@ -84,7 +84,7 @@ transactionRouter.get("/findByLender", async (req,res) => {
 		Logger.shared.log(`Successfully got transaction for lender with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for lender with id: ${user._id}`, 1);
+		Logger.shared.log(`Failed getting transaction for lender`, 1);
 		res.status(500).json({ message: e });
 	}
 });
@@ -92,18 +92,12 @@ transactionRouter.get("/findByLender", async (req,res) => {
 transactionRouter.post("/findByBorrower", async (req,res) => {
 	try {
 		Logger.shared.log(`Getting transaction for borrower`);
-		if (!user) {
-			const user = await User.findOne({uid: req.body.uid});
-			const transactions = await Transaction.find({$and: [{borrower: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
-		} else {
-			Logger.shared.log(`User not found`, 1);
-			throw "User not authorized";
-		}
-
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{borrower: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
 		Logger.shared.log(`Successfully got transaction for borrower with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for borrower with id: ${user._id}`, 1);
+		Logger.shared.log(`Failed getting transaction for borrower`, 1);
 		res.status(500).json({ message: e });
 	}
 });
@@ -117,7 +111,7 @@ transactionRouter.post("/findPastTransactions", async (req,res) => {
 		Logger.shared.log(`Successfully got past transaction for user with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting past transaction for user with id: ${user._id}`, 1);
+		Logger.shared.log(`Failed getting past transaction for user`, 1);
 		res.status(500).json({ message: e });
 	}
 });
