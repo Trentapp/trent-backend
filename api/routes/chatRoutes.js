@@ -95,15 +95,20 @@ chatRouter.post("/chat/:id", async (req,res) => {
 
 // Not secure yet. I will either make it secure or find another way to solve it so I don't need that function soon
 //attention: if that method is called and the corresponding chat does not exist yet, the chat is created
-chatRouter.get("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
+chatRouter.post("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
 	Logger.shared.log(`Getting chat using /chats/getByLenderBorrowerProduct with lenderId: ${req.params.lenderId}, borrowerId: ${req.params.borrowerId}, productId: ${req.params.productId}`);
 	try {
+		const user = await User.findOne({uid: req.body.uid});
 		let chat = await Chat.findOne({$and: [{'lender': req.params.lenderId}, {'borrower': req.params.borrowerId}, {'product': req.params.productId}] });
 		if (!chat){
 			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, product: req.params.productId, messages: []});//this somehow not may be returned properly
 		} else {
 			await chat.populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 		}
+		console.log("USER: ", user, chat);
+		/*if (!user || (JSON.stringify(chat.borrower._id) != JSON.stringify(user._id) && JSON.stringify(chat.lender._id) != JSON.stringify(user._id))){
+			throw "No access to chat!";
+		}*/ // the check does not work yet, but will be fixed automatically when the references are saved as ObjectIds
 		Logger.shared.log(`Successfully sent chat with id: ${chat._id}`);
 		res.status(200).json(chat);
 	} catch (e) {
