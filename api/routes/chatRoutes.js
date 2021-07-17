@@ -81,7 +81,8 @@ chatRouter.post("/chat/:id", async (req,res) => {
 	try {
 		const user = await User.findOne({uid: req.body.uid});
 		const chat = await Chat.findById(req.params.id).populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
-		if (!user || (chat.borrower._id != user._id && chat.lender._id != user._id)){
+		console.log("chat, user: ", chat, user, JSON.stringify(chat.borrower._id), JSON.stringify(user._id));
+		if (!user || (JSON.stringify(chat.borrower._id) != JSON.stringify(user._id) && JSON.stringify(chat.lender._id) != JSON.stringify(user._id))){
 			throw "No access to chat!";
 		}
 		Logger.shared.log(`Successfully sent chat with id: ${req.params.id}`);
@@ -95,7 +96,7 @@ chatRouter.post("/chat/:id", async (req,res) => {
 // Not secure yet. I will either make it secure or find another way to solve it so I don't need that function soon
 //attention: if that method is called and the corresponding chat does not exist yet, the chat is created
 chatRouter.get("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
-	Logger.shared.log(`Getting chat using /chats/getByLenderBorrowerProduct with lenderId: ${lenderId}, borrowerId: ${borrowerId}, productId: ${productId}`);
+	Logger.shared.log(`Getting chat using /chats/getByLenderBorrowerProduct with lenderId: ${req.params.lenderId}, borrowerId: ${req.params.borrowerId}, productId: ${req.params.productId}`);
 	try {
 		let chat = await Chat.findOne({$and: [{'lender': req.params.lenderId}, {'borrower': req.params.borrowerId}, {'product': req.params.productId}] });
 		if (!chat){
@@ -103,7 +104,7 @@ chatRouter.get("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", a
 		} else {
 			await chat.populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
 		}
-		Logger.shared.log(`Successfully sent chat with id: ${id}`);
+		Logger.shared.log(`Successfully sent chat with id: ${chat._id}`);
 		res.status(200).json(chat);
 	} catch (e) {
 		Logger.shared.log(`Sending chat failed: ${e}`, 1);
