@@ -3,7 +3,7 @@ import mongoose from "mongoose"
 export const MessageSchema = mongoose.Schema({
 	sender: {
 		type: mongoose.Schema.Types.ObjectId,
-		ref: "Users",
+		ref: "User",
 		required: true
 	},
     timestamp: {
@@ -22,19 +22,22 @@ export const MessageSchema = mongoose.Schema({
 
 const ChatSchema = mongoose.Schema({
 	lender: {
-		type: String,
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
 		required: true
 	},
 	borrower: {
-		type: String,
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
 		required: true
 	},
-	product: {
-		type: String,
+	product:{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Product',
 		required: true
 	},
 	messages: [MessageSchema]
 })
 
 ChatSchema.index({name: "text"});
-export default mongoose.model("Chats", ChatSchema);
+export default mongoose.model("Chat", ChatSchema);

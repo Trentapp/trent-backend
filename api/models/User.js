@@ -13,12 +13,12 @@ const UserSchema = mongoose.Schema({ //to be extended
     mail: String,//I would use email instead of mail
     //picture: String,
     address: AddressSchema,
-    inventory: [String], // I think actually you we should do it like: inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Products"}]
-    transactionsLender: [String],
-    transactionsBorrower: [String],
+    inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Product"}], // are we using this currently?
+    transactionsLender: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
+    transactionsBorrower: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
     rating: Number,
-    numberOfRatings: Number
+    numberOfRatings: Number //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
 });
 
 UserSchema.index({name: "text"});
-export default mongoose.model("Users", UserSchema);
+export default mongoose.model("User", UserSchema);

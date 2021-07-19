@@ -16,13 +16,13 @@ reviewRouter.post("/create", async (req,res) => { //maybe change that so the pos
     try {
         Logger.shared.log(`Creating review ${req.body.review}`);
         const user = await User.findOne({uid: req.body.uid});
-        if (user._id != req.body.review.poster._id || req.body.review.posterId == req.body.review.ratedUser._id){
+        if (JSON.stringify(user._id) != JSON.stringify(req.body.review.poster)){
             Logger.shared.log(`Authenticating user with review failed: ${req.body.review}`, 1);
             throw "user identification incorrect";
         } else {
             const newReview = await Review.create(req.body.review);//this is dangerous! An update should only occur if everything works (otherwise it can throw an error and still partially update). Fix that later.
-            Logger.shared.log(`Successfully created review ${newReview}`);
-            const owner = await User.findById(req.body.review.ratedUser._id);
+            Logger.shared.log(`Successfully created review with id ${newReview._id}`);
+            const owner = await User.findById(req.body.review.ratedUser);
             const newUserRating = (owner.rating * owner.numberOfRatings + req.body.review.stars)/(owner.numberOfRatings + 1);// I hope we don't get rounding errors
             await User.findByIdAndUpdate(owner._id, {rating: newUserRating, numberOfRatings: (owner.numberOfRatings + 1)});
             Logger.shared.log(`Successfully updated reviewed User`);
@@ -38,7 +38,7 @@ reviewRouter.post("/create", async (req,res) => { //maybe change that so the pos
 reviewRouter.get("/review/:id", async (req, res) => {
     try {
         Logger.shared.log(`Requesting review with id ${req.params.id}`);
-        const review = await Review.findOne({ _id: req.params.id}).populate([{path:'ratedUser', model:'Users', select:['name']}, {path:'poster', model:'Users', select:['name']}]);
+        const review = await Review.findOne({ _id: req.params.id}).populate([{path:'ratedUser', model:'User', select:['name']}, {path:'poster', model:'User', select:['name']}]);
         Logger.shared.log(`Successfully sent review with id ${req.params.id}`);
         res.status(200).json(review);
     } catch(e) {
@@ -50,7 +50,7 @@ reviewRouter.get("/review/:id", async (req, res) => {
 reviewRouter.get("/user/:id", async (req, res) => {
     try {
         Logger.shared.log(`Requesting reviews of user with id ${req.params.id}`);
-        let reviews = await Review.find({ ratedUserId: req.params.id}).populate([{path:'ratedUser', model:'Users', select:['name']}, {path:'poster', model:'Users', select:['name']}]);
+        let reviews = await Review.find({ ratedUser: req.params.id}).populate([{path:'ratedUser', model:'User', select:['name']}, {path:'poster', model:'User', select:['name']}]);
         Logger.shared.log(`Successfully sent reviews of user with id ${req.params.id}`);
         res.status(200).json(reviews);
     } catch(e) {
@@ -63,15 +63,15 @@ reviewRouter.get("/user/:id", async (req, res) => {
 reviewRouter.put("/update/:id", async (req, res) => {
     try {
         Logger.shared.log(`Updating review with id ${req.params.id}`);
-        const user = await User.findOne({uid: req.body.uid});
-        if (user._id != req.body.review.posterId) {
+        const user = await User.findOne({uid: req.body.uid}).orFail();
+        if (user._id != req.body.review.poster) {
             Logger.shared.log(`Authentication for user updating review with id ${req.params.id} failed`, 1);
             throw "incorrect user identification";
         } else {
-            const oldReview = await Review.findById(req.params.id);
+            const oldReview = await Review.findById(req.params.id).populate([{path:'ratedUser', model:'User', select:['name']}, {path:'poster', model:'User', select:['name']}]);
             await Review.replaceOne({_id: req.params.id}, req.body.review);
             const difference = req.body.review.stars - oldReview.stars;
-            const owner = await User.findById(req.body.review.ratedUserId);
+            const owner = await User.findById(req.body.review.ratedUser);
             const newUserRating = owner.rating + difference * (1/owner.numberOfRatings);
             await User.findByIdAndUpdate(owner._id, {rating: newUserRating});
             res.status(200).json({status: "success"});
@@ -87,9 +87,9 @@ reviewRouter.put("/update/:id", async (req, res) => {
 reviewRouter.delete("/delete/:id", async (req, res) => {
     try {
         Logger.shared.log(`Deleting review with id ${req.params.id}`);
-        const user = await User.findOne({uid: req.body.uid});
-        const review = await Review.findOne({_id: req.params.id});
-        if (user._id != review.posterId) {
+        const user = await User.findOne({uid: req.body.uid}).orFail();
+        const review = await Review.findOne({_id: req.params.id}).populate([{path:'ratedUser', model:'User', select:['name']}, {path:'poster', model:'User', select:['name']}]).orFail();
+        if (JSON.stringify(user._id) != JSON.stringify(review.poster._id)) {
             Logger.shared.log(`Authentication for user delting review with id ${req.params.id} failed`, 1);
             throw "incorrect user identification";
         } else {
@@ -98,7 +98,7 @@ reviewRouter.delete("/delete/:id", async (req, res) => {
             res.status(200).json({message: "success"});
         }
     } catch (e) {
-        Logger.shared.log(`Deleted review with id ${req.params.id} failed: ${e}`, 1);
+        Logger.shared.log(`Deleting review with id ${req.params.id} failed: ${e}`, 1);
         res.status(500).json({message: e});
     }
 })

@@ -24,7 +24,6 @@ userRouter.post("/create", async (req, res) => {
 
 // get private profile
 userRouter.post("/user", async (req, res) => {
-  console.log("called!");
   Logger.shared.log(`Getting private user profile`);
     try {
         const user = await User.findOne({ uid: req.body.uid }).orFail();

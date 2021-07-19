@@ -37,11 +37,15 @@ const ProductSchema = mongoose.Schema({ //to be extended
         type: AddressSchema,
         required: true
     },
-    user: String,
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     thumbnail: String,
     pictures: [ImageSchema]
 });
 
 // ProductSchema.index({name: "text", location: "2dsphere"});
 ProductSchema.index({name: "text"});
-export default mongoose.model("Products", ProductSchema);
+export default mongoose.model("Product", ProductSchema);

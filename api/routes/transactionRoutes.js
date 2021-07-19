@@ -16,7 +16,7 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		console.log(req.body.uid, user);
 		const userId = user._id;
 		if (!userId) { Logger.shared.log(`Could not authenticate user`, 1); throw "User uid not found" }
-		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'Users', select:['name']}]);
+		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'User', select:['name']}]);
 		const lenderId = product.user._id;
 		if (!lenderId) { Logger.shared.log(`Lender not found`, 1); throw "Lender id not found"; }
 		if (lenderId == userId) { Logger.shared.log(`Lender cannot be same user as borrower`, 1); throw "Invalid operation: Lender can not be the same user as borrower" }
@@ -124,12 +124,16 @@ transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put 
 		if (JSON.stringify(user._id) == JSON.stringify(transaction.borrower._id) && req.body.status == 1) { //the borrower can only cancel a request
 			await Transaction.updateOne({_id: req.params.id}, {status: 1});
 		}
-		else if (user._id == transaction.lender._id){
+		else if (JSON.stringify(user._id) == JSON.stringify(transaction.lender._id)){
 			if (req.body.status == 2 && transaction.status == 0){
 				await Transaction.updateOne({_id: req.params.id}, {status: 2});
 			} else if (req.body.status == 1){
 				await Transaction.updateOne({_id: req.params.id}, {status: 1});
 			}
+		}
+		else {
+			Logger.shared.log("User not allowed to set status of this transaction");
+			throw "User not allowed to set status of this transaction";
 		}
 		Logger.shared.log(`Successfully set status ${req.body.status} for transaction with id: ${req.params.id}`);
 		res.status(200).json({status: "success"});

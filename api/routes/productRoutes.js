@@ -53,7 +53,7 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
     }
     try {
         //console.log(queryConds);
-        const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'Users', select:['name']}]).skip(productsPerPage*page).limit(productsPerPage);//(other order may be slightly more efficient (populate at the end))
+        const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'User', select:['name']}]).skip(productsPerPage*page).limit(productsPerPage);//(other order may be slightly more efficient (populate at the end))
         res.status(200).json(products.map(product => ({_id: product._id, name: product.name, desc: product.desc, prices: product.prices, location: product.location, address: product.address, user: product.user, thumbnail: product.thumbnail})));
     } catch (e) {
         res.status(500).json({ message: e });
@@ -135,7 +135,7 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
 productsRouter.get("/product/:productId", async (req, res) => {
     try {
         Logger.shared.log(`Requesting product with id ${req.params.productId}`);
-        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'Users', select:['name']}]);
+        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'User', select:['name']}]);
         res.status(200).send(product);
     } catch (e) {
         Logger.shared.log(`Requesting product with id ${req.params.productId} failed: ${e}`, 1);
@@ -147,7 +147,7 @@ productsRouter.get("/product/:productId", async (req, res) => {
 productsRouter.delete("/product/delete/:productId", async (req, res) => {
     try {
         Logger.shared.log(`Deleting product with id ${req.params.productId}`);
-        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'Users', select:['name']}]);
+        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'User', select:['name']}]);
         const user = await User.findOne({uid: req.body.uid});
         if (JSON.stringify(user._id) != JSON.stringify(product.user._id)) {
             Logger.shared.log(`User deleting product with id ${req.params.productId} could not be verified`, 1);
@@ -179,7 +179,7 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
             }
         }
         const user = await User.findOne({uid: body.uid}); // add uid later
-        const oldProduct = await Product.findOne({_id: req.params.productId}).populate([{path:'user', model:'Users', select:['name']}]);
+        const oldProduct = await Product.findOne({_id: req.params.productId}).populate([{path:'user', model:'User', select:['name']}]);
         if (JSON.stringify(user._id) != JSON.stringify(oldProduct.user._id)){
             Logger.shared.log(`User updating product with id ${req.params.productId} could not be verified`, 1);
             throw "incorrect user identification";

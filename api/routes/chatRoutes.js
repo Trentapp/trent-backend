@@ -26,16 +26,16 @@ chatRouter.post("/sendMessage", async (req, res) => {
 		};
 
 		if (req.body.chatId) {// I would put that into a put("/updateChat/:id") route, but not important
-			const chat = await Chat.findById(req.body.chatId).populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
+			const chat = await Chat.findById(req.body.chatId).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			if (JSON.stringify(chat.borrower._id) != JSON.stringify(userId) && JSON.stringify(chat.lender._id) != JSON.stringify(userId)) { throw "User not authorized"; }
 			await Chat.findByIdAndUpdate(req.body.chatId, { $push: { messages: message } });
 		} else {
 			// not perfectly tested yet, I hope there is no problem if req.body.recipient is undefined
-			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
+			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			if (existingChat) {
 				await Chat.findByIdAndUpdate(existingChat._id, { $push: { messages: message } });
 			} else {
-				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'Users', select:['name']}]);
+				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'User', select:['name']}]);
 				if (product.user._id == userId && !req.body.recipient) { throw "missing parameters"; }
 
 				const chat = {
@@ -66,7 +66,7 @@ chatRouter.post("/getChatsOfUser", async (req, res) => {
 		const userId = user._id;
 		if (!userId) { Logger.shared.log(`Authentication for getting chats failed`, 1); throw "User uid not found"; }
 
-		const chats = await Chat.find({ $or: [{ borrower: userId }, { lender: userId }] }).populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
+		const chats = await Chat.find({ $or: [{ borrower: userId }, { lender: userId }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
 
 		Logger.shared.log(`Sent chats of users successfully`);
 		res.status(200).json(chats);
@@ -80,7 +80,7 @@ chatRouter.post("/chat/:id", async (req,res) => {
 	Logger.shared.log(`Getting chat with id: ${req.params.id}`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const chat = await Chat.findById(req.params.id).populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
+		const chat = await Chat.findById(req.params.id).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
 		console.log("chat, user: ", chat, user, JSON.stringify(chat.borrower._id), JSON.stringify(user._id));
 		if (!user || (JSON.stringify(chat.borrower._id) != JSON.stringify(user._id) && JSON.stringify(chat.lender._id) != JSON.stringify(user._id))){
 			throw "No access to chat!";
@@ -103,7 +103,7 @@ chatRouter.post("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", 
 		if (!chat){
 			chat = await Chat.create({lender: req.params.lenderId, borrower: req.params.borrowerId, product: req.params.productId, messages: []});//this somehow not may be returned properly
 		} else {
-			await chat.populate([{path: 'product', model: "Products", select: ['name']}, {path: 'borrower', model: "Users", select: ['name']}, {path: 'lender', model: "Users", select: ['name']}, {path:'messages.sender', model:'Users', select: ['name']}]);
+			await chat.populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
 		}
 		console.log("USER: ", user, chat);
 		/*if (!user || (JSON.stringify(chat.borrower._id) != JSON.stringify(user._id) && JSON.stringify(chat.lender._id) != JSON.stringify(user._id))){
