@@ -40,7 +40,7 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
     if (req.query.lat && req.query.lng) {
         let maxDistance = 25/6371;
         if(req.query.maxDistance){
-          maxDistance = req.query.maxDistance;
+          maxDistance = req.query.maxDistance / 6371;
         }
         queryConds.push({ location: { $geoWithin: { $centerSphere: [[req.query.lng, req.query.lat], 25/6371] } } }) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
     }
