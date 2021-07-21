@@ -13,9 +13,9 @@ userRouter.post("/create", async (req, res) => {
   Logger.shared.log(`Creating new user`);
     try {
         let user = req.body.user; //I would submit the user data in the request directly, so the new req.body is the old req.body.user
-        await User.create({ ...user, inventory: [], transactionsLender: [], transactionsBorrower: [], rating: 0, numberOfRatings: 0 }); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
+        let newUser = await User.create({ ...user, inventory: [], transactionsLender: [], transactionsBorrower: [], rating: 0, numberOfRatings: 0 }); //maybe we don't need inventory here, I think mongoose may create an empty list automatically
         Logger.shared.log(`Successfully created new user`);
-        res.status(200).json({ status: "success" });
+        res.status(200).json(newUser);
     } catch (e) {
       Logger.shared.log(`Creating new user failed`, 1);
         res.status(500).json({ message: e });
