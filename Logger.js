@@ -19,10 +19,10 @@ class Logger {
 
 		let dateString = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
 
-		let content = "[" + dateString + "]" + " " + this.prefixes[prefix] + message + "\n";
+		let content = "[" + dateString + "]" + " " + this.prefixes[prefix] + message;
 
 		console.log(content);
-		fs.writeFile('./server.log', content, { flag: 'a+' }, err => {})
+		fs.writeFile('./server.log', content + "\n", { flag: 'a+' }, err => {})
 	}
 
 }
