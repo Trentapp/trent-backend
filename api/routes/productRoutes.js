@@ -38,7 +38,11 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         filters.name = req.query.name;
     }
     if (req.query.lat && req.query.lng) {
-        queryConds.push({ location: { $geoWithin: { $centerSphere: [[req.query.lng, req.query.lat], 5/6371] } } }) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
+        let maxDistance = 25/6371;
+        if(req.query.maxDistance){
+          maxDistance = req.query.maxDistance;
+        }
+        queryConds.push({ location: { $geoWithin: { $centerSphere: [[req.query.lng, req.query.lat], 25/6371] } } }) // should be replaced with $near in production propably as maxDistance is otherwise in ° instead of m
     }
     if (req.query.dayPriceMax) {
         queryConds.push({ 'prices.perDay': { $lte: req.query.dayPriceMax } });
