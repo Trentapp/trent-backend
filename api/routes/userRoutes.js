@@ -39,7 +39,7 @@ userRouter.post("/user", async (req, res) => {
 userRouter.get("/user-profile/:id", async (req, res) => {
   Logger.shared.log(`Getting public user profile with id ${req.params.id}`);
     try {
-        const user = await User.findOne({_id: req.params.id}).orFail();
+        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail']}]).orFail();
         Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
         res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings});//should address and mail be publicly accessible? No :)
     } catch(e) {
