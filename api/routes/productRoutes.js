@@ -79,19 +79,9 @@ const getCoordinates = async (product) => {
 };
 
 // generating product thumbnail
-const getThumbnail = (product) => {
-    if (product['pictures'] == undefined) { return product }
-    if (product['pictures'].length === 0) { return product }
-    // return product
-    const image = product['pictures'][0];
-
-    let parts = base64Image.split(';');
-    let mimType = parts[0].split(':')[1];
-    let imageData = parts[1].split(',')[1];
-
-    var img = new Buffer(imageData, 'base64');
+const getThumbnail = (img) => {
     sharp(img)
-        .resize(64, 64)
+        .resize(128, 128)
         .toBuffer()
         .then(resizedImageBuffer => {
             let resizedImageData = resizedImageBuffer.toString('base64');
@@ -107,6 +97,8 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
     try {
         const images = [];
         let product, body;
+        let firstImage = true;
+
         for (const file of req.files){
             if (file.fieldname == "product"){
                 body = JSON.parse(fs.readFileSync(file.path).toString());
@@ -115,6 +107,10 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
             } else if (file.fieldname == "image"){
                 Logger.shared.log(`Received image for product`);
                 images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+                if(firstImage){
+
+                }
+                firstImage = false;
             }
         }
         const user = await User.findOne({ uid: body.uid });
@@ -139,7 +135,7 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
 productsRouter.get("/product/:productId", async (req, res) => {
     try {
         Logger.shared.log(`Requesting product with id ${req.params.productId}`);
-        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'User', select:['name']}]);
+        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'User', select:['name', 'rating', 'numberOfRatings']}]);
         res.status(200).send(product);
     } catch (e) {
         Logger.shared.log(`Requesting product with id ${req.params.productId} failed: ${e}`, 1);
