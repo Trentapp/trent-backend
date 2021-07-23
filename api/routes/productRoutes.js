@@ -78,26 +78,13 @@ const getCoordinates = async (product) => {
     }
 };
 
-// generating product thumbnail
-const getThumbnail = (img) => {
-    sharp(img)
-        .resize(128, 128)
-        .toBuffer()
-        .then(resizedImageBuffer => {
-            let resizedImageData = resizedImageBuffer.toString('base64');
-            let resizedBase64 = `data:${mimType};base64,${resizedImageData}`;
-            product['thumbnail'] = resizedBase64
-            return product;
-        })
-}
-
-
 productsRouter.post("/create", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
   Logger.shared.log(`Uploading new product started`)
     try {
         const images = [];
         let product, body;
         let firstImage = true;
+        let thumbnail;
 
         for (const file of req.files){
             if (file.fieldname == "product"){
@@ -105,10 +92,21 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
                 product = body.product;
                 Logger.shared.log(`Received product information successfully`);
             } else if (file.fieldname == "image"){
+                const filePath = file.path;
                 Logger.shared.log(`Received image for product`);
                 images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
                 if(firstImage){
-
+                  sharp(file.path)
+                  .metadata()
+                  .then( info => {
+                    sharp(filePath)
+                      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: (info.width - Math.min(info.width, info.height)) / 2, top: (info.height - Math.min(info.width, info.height)) / 2 })
+                      .resize({ height:200, width:200})
+                      .toFile(file.path + "_thumb")
+                      .then(function(newFileInfo){
+                          thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype}
+                      })
+                  })
                 }
                 firstImage = false;
             }
@@ -118,8 +116,11 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
         product["user"] = user._id;
 
         product.pictures = images;
+        if(images.length > 0){
+          // let thumbnail = await getThumbnail(images[0]);
+          product.thumbnail = thumbnail;
+        }
         product = await getCoordinates(product);
-        //product = getThumbnail(product);
         const newProduct = await Product.create(product);
         await User.updateOne({ _id: user._id }, { $push: { inventory: newProduct._id } });
         Logger.shared.log(`Successfully created product with id ${newProduct._id}`);

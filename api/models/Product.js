@@ -42,7 +42,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
         ref: 'User',
         required: true
     },
-    thumbnail: String,
+    thumbnail: ImageSchema,
     pictures: [ImageSchema]
 });
 

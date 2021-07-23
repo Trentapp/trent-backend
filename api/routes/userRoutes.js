@@ -50,11 +50,11 @@ userRouter.get("/user-profile/:id", async (req, res) => {
 
 // update user
 userRouter.put("/update", async (req, res) => {
-  Logger.shared.log(`Getting public user profile with id ${req.body.user._id}`);
     try {
         const updatedUser = req.body.user;
 
         const user = await User.findOne({ uid: updatedUser.uid });
+        Logger.shared.log(`Updating public user profile with id ${user._id}`);
 
         updatedUser["_id"] = user._id;
         updatedUser["inventory"] = user.inventory;
@@ -63,10 +63,10 @@ userRouter.put("/update", async (req, res) => {
         updatedUser["mail"] = user.mail;
 
         await User.replaceOne({ uid: req.body.user.uid }, req.body.user);// maybe change to updateOne later
-        Logger.shared.log(`Successfully updated user profile with id ${req.body.user._id}`);
+        Logger.shared.log(`Successfully updated user profile with id ${user._id}`);
         res.status(200).json({ status: "success" });
     } catch (e) {
-        Logger.shared.log(`Updating user profile with id ${req.body.user._id} failed: ${e}`);
+        Logger.shared.log(`Updating user profile failed: ${e}`);
         res.status(500).json({ message: e });
     }
 });
