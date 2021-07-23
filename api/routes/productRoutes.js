@@ -136,7 +136,7 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
 productsRouter.get("/product/:productId", async (req, res) => {
     try {
         Logger.shared.log(`Requesting product with id ${req.params.productId}`);
-        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'User', select:['name', 'rating', 'numberOfRatings']}]);
+        const product = await Product.findById(req.params.productId).populate([{path:'user', model:'User', select:['name', 'rating', 'numberOfRatings', 'picture']}]);
         res.status(200).send(product);
     } catch (e) {
         Logger.shared.log(`Requesting product with id ${req.params.productId} failed: ${e}`, 1);
