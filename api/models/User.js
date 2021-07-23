@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
 import {AddressSchema} from "./Product.js"
+import {ImageSchema} from "./Product.js"
 
 const UserSchema = mongoose.Schema({ //to be extended
     uid: {
@@ -17,7 +18,8 @@ const UserSchema = mongoose.Schema({ //to be extended
     transactionsLender: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
     transactionsBorrower: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
     rating: Number,
-    numberOfRatings: Number //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
+    numberOfRatings: Number, //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
+    picture: ImageSchema
 });
 
 UserSchema.index({name: "text"});

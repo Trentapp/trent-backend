@@ -8,7 +8,7 @@ export const AddressSchema = mongoose.Schema({
     country: String
 });
 
-const ImageSchema = mongoose.Schema({
+export const ImageSchema = mongoose.Schema({
     data: Buffer,
     contentType: String,
 });

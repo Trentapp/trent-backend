@@ -127,7 +127,7 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
         res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
         console.log("Error in post product: ", e);
-        Logger.shared.log(`Could not create prodcut: ${e}`, 1);
+        Logger.shared.log(`Could not create product: ${e}`, 1);
         res.status(500).json({message:e});
     }
 });

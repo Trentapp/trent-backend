@@ -1,8 +1,13 @@
 import express from "express"
+import sharp from "sharp"
+import multer from "multer"
+import fs from "fs"
 import User from "../models/User.js"
 import Product from "../models/Product.js"
 
 import Logger from "../../Logger.js"
+
+const upload = multer({dest: "../uploads/"});
 
 const userRouter = express.Router();
 
@@ -85,5 +90,44 @@ userRouter.delete("/delete", async (req, res) => {
         res.status(500).json({ message: e });
     }
 })
+
+userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
+  Logger.shared.log(`Uploading new profile picture started`)
+    try {
+        let body, thumbnail;
+        for (const file of req.files){
+            if (file.fieldname == "parameters"){
+                body = JSON.parse(fs.readFileSync(file.path).toString());
+                Logger.shared.log(`Received uid successfully`);
+            } else if (file.fieldname == "image"){
+                Logger.shared.log(`Received image`);
+                thumbnail = await convertPicture(file);
+            }
+        }
+        console.log("updating user");
+        let user = await User.updateOne({ uid: body.uid }, {picture: thumbnail});
+        Logger.shared.log(`Successfully uploaded new profile picture for user`);
+        res.status(200).json({status: "success", productId: user._id});
+    } catch(e) {
+        Logger.shared.log(`Could not upload picture: ${e}`, 1);
+        res.status(500).json({message:e});
+    }
+});
+
+const convertPicture = async (file) => new Promise(resolve => {
+  sharp(file.path)
+  .metadata()
+  .then( info => {
+    sharp(file.path)
+      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: (info.width - Math.min(info.width, info.height)) / 2, top: (info.height - Math.min(info.width, info.height)) / 2 })
+      .resize({ height:200, width:200})
+      .toFile(file.path + "_thumb")
+      .then(function(newFileInfo){
+          let thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype};
+          console.log("image ready");
+          resolve(thumbnail);
+      })
+  })
+});
 
 export default userRouter;
