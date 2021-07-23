@@ -89,7 +89,7 @@ userRouter.delete("/delete", async (req, res) => {
         Logger.shared.log(`Delting user profile with id ${req.body.user._id} failed: ${e}`);
         res.status(500).json({ message: e });
     }
-})
+});
 
 userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
   Logger.shared.log(`Uploading new profile picture started`)
@@ -105,13 +105,25 @@ userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (re
             }
         }
         console.log("updating user");
-        let user = await User.updateOne({ uid: body.uid }, {picture: thumbnail});
+        await User.updateOne({ uid: body.uid }, {picture: thumbnail});
         Logger.shared.log(`Successfully uploaded new profile picture for user`);
-        res.status(200).json({status: "success", productId: user._id});
+        res.status(200).json({status: "success"});
     } catch(e) {
         Logger.shared.log(`Could not upload picture: ${e}`, 1);
         res.status(500).json({message:e});
     }
+});
+
+userRouter.post("/deleteProfilePicture", async (req, res) => {
+  Logger.shared.log("Deleting profile picture");
+  try {
+    await User.updateOne({uid : req.body.uid}, {$unset : {picture:""}});
+    Logger.shared.log("Successfully delete profile picture");
+    res.status(200).json({status: "success"});
+  } catch(e) {
+    Logger.shared.log(`Could not delete delete profile picture: ${e}`, 1);
+    res.status(500).json({message:e});
+  }
 });
 
 const convertPicture = async (file) => new Promise(resolve => {
