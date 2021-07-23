@@ -92,21 +92,8 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
                 product = body.product;
                 Logger.shared.log(`Received product information successfully`);
             } else if (file.fieldname == "image"){
-                const filePath = file.path;
-                Logger.shared.log(`Received image for product`);
-                images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
-                if(firstImage){
-                  sharp(file.path)
-                  .metadata()
-                  .then( info => {
-                    sharp(filePath)
-                      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: (info.width - Math.min(info.width, info.height)) / 2, top: (info.height - Math.min(info.width, info.height)) / 2 })
-                      .resize({ height:200, width:200})
-                      .toFile(file.path + "_thumb")
-                      .then(function(newFileInfo){
-                          thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype}
-                      })
-                  })
+                if (!firstImage) {
+                  thumbnail = await convertPicture(file)
                 }
                 firstImage = false;
             }
@@ -195,6 +182,22 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
         Logger.shared.log(`Updating product with id ${req.params.productId} failed: ${e}`, 1);
         res.status(500).json({ message: e });
     }
+});
+
+const convertPicture = async (file) => new Promise(resolve => {
+  sharp(file.path)
+  .metadata()
+  .then( info => {
+    sharp(file.path)
+      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: (info.width - Math.min(info.width, info.height)) / 2, top: (info.height - Math.min(info.width, info.height)) / 2 })
+      .resize({ height:200, width:200})
+      .toFile(file.path + "_thumb")
+      .then(function(newFileInfo){
+          let thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype};
+          console.log("image ready");
+          resolve(thumbnail);
+      })
+  })
 });
 
 export default productsRouter;
