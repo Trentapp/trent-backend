@@ -92,7 +92,8 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
                 product = body.product;
                 Logger.shared.log(`Received product information successfully`);
             } else if (file.fieldname == "image"){
-                if (!firstImage) {
+              images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+                if (firstImage) {
                   thumbnail = await convertPicture(file)
                 }
                 firstImage = false;
@@ -154,6 +155,7 @@ productsRouter.delete("/product/delete/:productId", async (req, res) => {
 
 //Update a specific product
 productsRouter.put("/product/update/:productId", upload.any(), upload.single("product"), async (req, res) => {
+  // TODO: thumbnail
     try {
         Logger.shared.log(`Updating product with id ${req.params.productId}`);
         const images = [];
