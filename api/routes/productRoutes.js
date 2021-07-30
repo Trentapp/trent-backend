@@ -92,9 +92,9 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
                 product = body.product;
                 Logger.shared.log(`Received product information successfully`);
             } else if (file.fieldname == "image"){
-              images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+                images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
                 if (firstImage) {
-                  thumbnail = await convertPicture(file)
+                    thumbnail = await convertPicture(file)
                 }
                 firstImage = false;
             }

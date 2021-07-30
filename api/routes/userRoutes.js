@@ -46,7 +46,7 @@ userRouter.get("/user-profile/:id", async (req, res) => {
     try {
         const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail']}]).orFail();
         Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
-        res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings});//should address and mail be publicly accessible? No :)
+        res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings, picture: user.picture});//should address and mail be publicly accessible? No :)
     } catch(e) {
       Logger.shared.log(`Failed getting public user profile with id ${req.params.id}`, 1);
         res.status(500).json({message: e});
@@ -105,7 +105,6 @@ userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (re
                 thumbnail = await convertPicture(file);
             }
         }
-        console.log("updating user");
         await User.updateOne({ uid: body.uid }, {picture: thumbnail});
         Logger.shared.log(`Successfully uploaded new profile picture for user`);
         res.status(200).json({status: "success"});
