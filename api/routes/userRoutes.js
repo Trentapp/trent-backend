@@ -31,7 +31,7 @@ userRouter.post("/create", async (req, res) => {
 userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail']}, {path:'user', model:'User', select:['name']}]).orFail();
+        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail']}, {path:'user', model:'User', select:['name', '_id']}]).orFail();
         Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
         res.status(200).json(user);
     } catch (e) {
@@ -144,7 +144,7 @@ const convertPicture = async (file) => new Promise(resolve => {
   .metadata()
   .then( info => {
     sharp(file.path)
-      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: (info.width - Math.min(info.width, info.height)) / 2, top: (info.height - Math.min(info.width, info.height)) / 2 })
+      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: parseInt((info.width - Math.min(info.width, info.height)) / 2), top: parseInt((info.height - Math.min(info.width, info.height)) / 2) })
       .resize({ height:200, width:200})
       .toFile(file.path + "_thumb")
       .then(function(newFileInfo){
