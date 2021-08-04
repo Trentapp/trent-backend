@@ -32,9 +32,16 @@ app.get("/", (req, res) => {
     res.send("Yes it works. Access the api with specific calls to /api .");
 });
 
-mongoose.connect(process.env.DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
+if (process.env.ENV == "production"){
+    mongoose.connect(process.env.PROD_DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
     .then(() => Logger.shared.log(`Connected to DB`))
     .catch(err => Logger.shared.log(`Failed to connect to DB`, 1));
+} else {//dev
+    mongoose.connect(process.env.DEV_DATABASE_URI, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
+    .then(() => Logger.shared.log(`Connected to DB`))
+    .catch(err => Logger.shared.log(`Failed to connect to DB`, 1));
+}
+
 mongoose.set('useFindAndModify', false); // Should we use findAndModify instead?
 
 app.listen(port, () => {
