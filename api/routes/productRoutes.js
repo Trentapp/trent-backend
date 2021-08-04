@@ -191,7 +191,7 @@ const convertPicture = async (file) => new Promise(resolve => {
   .metadata()
   .then( info => {
     sharp(file.path)
-      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: (info.width - Math.min(info.width, info.height)) / 2, top: (info.height - Math.min(info.width, info.height)) / 2 })
+      .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: parseInt((info.width - Math.min(info.width, info.height)) / 2), top: parseInt((info.height - Math.min(info.width, info.height)) / 2) })
       .resize({ height:200, width:200})
       .toFile(file.path + "_thumb")
       .then(function(newFileInfo){
