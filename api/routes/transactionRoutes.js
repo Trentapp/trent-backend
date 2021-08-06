@@ -61,7 +61,7 @@ transactionRouter.post("/transaction/:id", async (req,res) => {
 	Logger.shared.log(`Getting transaction with id: ${req.params.id}`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const transaction = await Transaction.findById(req.params.id).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		const transaction = await Transaction.findById(req.params.id).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating']}, {path: 'lender', select: ['name', 'picture']}]);
 		if (!user || (transaction.borrower._id != user._id && transaction.lender._id != user._id)){
 			throw "No access to transaction!";
 		}
@@ -84,7 +84,7 @@ transactionRouter.post("/findByLender", async (req,res) => {
 		Logger.shared.log(`Successfully got transaction for lender with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for lender`, 1);
+		Logger.shared.log(`Failed getting transaction for lender ${e}`, 1);
 		res.status(500).json({ message: e });
 	}
 });
@@ -98,6 +98,19 @@ transactionRouter.post("/findByBorrower", async (req,res) => {
 		res.status(200).json(transactions);
 	} catch (e) {
 		Logger.shared.log(`Failed getting transaction for borrower`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
+transactionRouter.post("/all", async (req,res) => {
+	try {
+		Logger.shared.log(`Getting all transactions of user`);
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{$or:[{borrower: user._id}, {lender: user._id} ]}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		Logger.shared.log(`Successfully got transaction for user with id: ${user._id}`);
+		res.status(200).json(transactions);
+	} catch (e) {
+		Logger.shared.log(`Failed getting transaction for user ${e}`, 1);
 		res.status(500).json({ message: e });
 	}
 });
