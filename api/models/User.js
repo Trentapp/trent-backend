@@ -20,7 +20,7 @@ const UserSchema = mongoose.Schema({ //to be extended
     rating: Number,
     numberOfRatings: Number, //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
     picture: ImageSchema,
-    apn_token: String
+    apnTokens: [String]
 });
 
 UserSchema.index({name: "text"});

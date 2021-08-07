@@ -155,4 +155,20 @@ const convertPicture = async (file) => new Promise(resolve => {
   })
 });
 
+userRouter.post("/addAPNToken", async (req, res) => {
+  Logger.shared.log("Adding new APN Token");
+    try {
+        const user = await User.findOne({ uid: req.body.uid });
+        if (!user.apnTokens.includes(req.body.token)) {
+          user.apnTokens.push(req.body.token);
+        }
+        await User.replaceOne({ uid: req.body.uid }, user);
+        Logger.shared.log("Successfully set new APN Token");
+        res.status(200).json({ status: "success" });
+    } catch (e) {
+      Logger.shared.log(`Error adding new APN Token: ${e}`);
+        res.status(500).json({ message: e });
+    }
+});
+
 export default userRouter;
