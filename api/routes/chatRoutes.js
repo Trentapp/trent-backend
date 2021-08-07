@@ -1,10 +1,10 @@
 import express from "express"
-import apn from "apn"
 import User from "../models/User.js"
 import Product from "../models/Product.js"
 import Chat from "../models/Chat.js"
 
 import Logger from "../../Logger.js"
+import PushNotificationHandler from "../../PushNotificationHandler.js"
 
 const chatRouter = express.Router();
 
@@ -32,53 +32,20 @@ chatRouter.post("/sendMessage", async (req, res) => {
 			await Chat.findByIdAndUpdate(req.body.chatId, { $push: { messages: message } });
 
 			var senderName = "";
-			var recipientToken = [];
+			var recipientTokens = [];
 
 			// console.log(chat);
 
 			if (userId == chat.lender._id) {
 				senderName = chat.lender.name;
-				recipientToken = chat.borrower.apnTokens;
+				recipientTokens = chat.borrower.apnTokens;
 			} else {
 				senderName = chat.borrower.name;
-				recipientToken = chat.lender.apnTokens;
+				recipientTokens = chat.lender.apnTokens;
 			}
-			
-	 //
-			let options = {
-		 token: {
-			 key: "AuthKey_F3T5R97C3S.p8",
-			 // Replace keyID and teamID with the values you've previously saved.
-			 keyId: "F3T5R97C3S",
-			 teamId: "HJFU68N96J"
-		 },
-		 production: false
-	 };
 
-	 let apnProvider = new apn.Provider(options);
+			PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
 
-	 // Replace deviceToken with your particular token:
-	 // let deviceToken = "16938391310CF7F1CF83AB0418B373B5BC52E2C449A6CC8F997ECD5E50574F0E";
-	 let deviceToken = recipientToken[0];
-	 console.log(deviceToken);
-
-	 // Prepare the notifications
-	 let notification = new apn.Notification();
-	 notification.expiry = Math.floor(Date.now() / 1000) + 24 * 3600; // will expire in 24 hours from now
-	 notification.badge = 2;
-	 notification.sound = "ping.aiff";
-	 notification.alert = `New messag from ${senderName}`;
-	 // notification.payload = {'messageFrom': 'Solarian Programmer'};
-
-	 // Replace this with your app bundle ID:
-	 notification.topic = "com.trentapp.Trent";
-
-	 // Send the actual notification
-	 apnProvider.send(notification, deviceToken).then( result => {
-		// Show the result of the send operation:
-		});
-		// Close the server
-		apnProvider.shutdown();
 		} else {
 			// not perfectly tested yet, I hope there is no problem if req.body.recipient is undefined
 			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
