@@ -25,6 +25,10 @@ app.use(function (req, res, next) {
 });
 app.use(express.json());
 
+app.get("/.well-known/apple-app-site-association", (req, res) => {
+  res.sendFile( process.cwd() + "/apple-app-site-association.json")
+});
+
 app.use("/api", routes)
 app.use("*", (req, res) => {res.status(404).json({error: "Not found"}); Logger.shared.log(`Accessed invalid url ${req.originalUrl}`)});
 

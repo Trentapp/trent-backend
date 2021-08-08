@@ -31,11 +31,11 @@ userRouter.post("/create", async (req, res) => {
 userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail']}, {path:'user', model:'User', select:['name', '_id']}]).orFail();
+        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user'], populate: {path: 'user', model: 'User', select:['_id']}}]).orFail();
         Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
         res.status(200).json(user);
     } catch (e) {
-        Logger.shared.log(`Failed getting private user profile`, 1);
+        Logger.shared.log(`Failed getting private user profile ${e}`, 1);
         res.status(500).json({ message: e });
     }
 });
@@ -153,6 +153,22 @@ const convertPicture = async (file) => new Promise(resolve => {
           resolve(thumbnail);
       })
   })
+});
+
+userRouter.post("/addAPNToken", async (req, res) => {
+  Logger.shared.log("Adding new APN Token");
+    try {
+        const user = await User.findOne({ uid: req.body.uid });
+        if (!user.apnTokens.includes(req.body.token)) {
+          user.apnTokens.push(req.body.token);
+        }
+        await User.replaceOne({ uid: req.body.uid }, user);
+        Logger.shared.log("Successfully set new APN Token");
+        res.status(200).json({ status: "success" });
+    } catch (e) {
+      Logger.shared.log(`Error adding new APN Token: ${e}`);
+        res.status(500).json({ message: e });
+    }
 });
 
 export default userRouter;

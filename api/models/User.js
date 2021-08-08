@@ -19,7 +19,8 @@ const UserSchema = mongoose.Schema({ //to be extended
     transactionsBorrower: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
     rating: Number,
     numberOfRatings: Number, //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
-    picture: ImageSchema
+    picture: ImageSchema,
+    apnTokens: [String]
 });
 
 UserSchema.index({name: "text"});

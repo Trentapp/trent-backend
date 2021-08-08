@@ -4,6 +4,7 @@ import Product from "../models/Product.js"
 import Transaction from "../models/Transaction.js"
 
 import Logger from "../../Logger.js"
+import PushNotificationHandler from "../../PushNotificationHandler.js"
 
 const transactionRouter = express.Router();
 
@@ -16,7 +17,7 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		console.log(req.body.uid, user);
 		const userId = user._id;
 		if (!userId) { Logger.shared.log(`Could not authenticate user`, 1); throw "User uid not found" }
-		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'User', select:['name']}]);
+		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'User', select:['name', 'apnTokens']}]);
 		const lenderId = product.user._id;
 		if (!lenderId) { Logger.shared.log(`Lender not found`, 1); throw "Lender id not found"; }
 		if (lenderId == userId) { Logger.shared.log(`Lender cannot be same user as borrower`, 1); throw "Invalid operation: Lender can not be the same user as borrower" }
@@ -47,8 +48,8 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		//are the transactionsBorrower and transactionsLender lists useful? (For what?)
 		await User.updateOne({_id: userId}, { $push: { transactionsBorrower: newTransaction._id } });
 		await User.updateOne({_id: lenderId}, { $push: { transactionsLender: newTransaction._id } });
-
 		Logger.shared.log(`Successfully sent request with id: ${newTransaction._id}`);
+		PushNotificationHandler.shared.sendPushNotification("New borrowing request", `${user.name} has requested to borrow ${product.name}`, product.user.apnTokens);
 		res.status(200).json({ status: "success" });
 	} catch (e) {
 		Logger.shared.log(`Sending request failed: ${e}`, 1);
@@ -61,8 +62,8 @@ transactionRouter.post("/transaction/:id", async (req,res) => {
 	Logger.shared.log(`Getting transaction with id: ${req.params.id}`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const transaction = await Transaction.findById(req.params.id).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
-		if (!user || (transaction.borrower._id != user._id && transaction.lender._id != user._id)){
+		const transaction = await Transaction.findById(req.params.id).populate([{path: 'product', select: ['name', 'address']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		if (!user || (JSON.stringify(transaction.borrower._id) != JSON.stringify(user._id) && JSON.stringify(transaction.lender._id) != JSON.stringify(user._id))){
 			throw "No access to transaction!";
 		}
 		Logger.shared.log(`Got transaction successfully`);
@@ -80,11 +81,11 @@ transactionRouter.post("/findByLender", async (req,res) => {
 	Logger.shared.log(`Getting transaction for lender`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$and: [{lender: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		const transactions = await Transaction.find({$and: [{lender: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
 		Logger.shared.log(`Successfully got transaction for lender with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for lender`, 1);
+		Logger.shared.log(`Failed getting transaction for lender ${e}`, 1);
 		res.status(500).json({ message: e });
 	}
 });
@@ -93,11 +94,24 @@ transactionRouter.post("/findByBorrower", async (req,res) => {
 	try {
 		Logger.shared.log(`Getting transaction for borrower`);
 		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$and: [{borrower: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		const transactions = await Transaction.find({$and: [{borrower: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
 		Logger.shared.log(`Successfully got transaction for borrower with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
 		Logger.shared.log(`Failed getting transaction for borrower`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
+transactionRouter.post("/all", async (req,res) => {
+	try {
+		Logger.shared.log(`Getting all transactions of user`);
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{$or:[{borrower: user._id}, {lender: user._id} ]}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address']}, {path: 'borrower', select: ['name', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		Logger.shared.log(`Successfully got transaction for user with id: ${user._id}`);
+		res.status(200).json(transactions);
+	} catch (e) {
+		Logger.shared.log(`Failed getting transaction for user ${e}`, 1);
 		res.status(500).json({ message: e });
 	}
 });
@@ -107,7 +121,7 @@ transactionRouter.post("/findPastTransactions", async (req,res) => {
 	Logger.shared.log(`Getting past transaction for user`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$and: [{$or: [{lender: user._id}, {borrower: user._id}]}, {$or: [{endDate: {$lt: new Date()}}, {status: 1}]}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
+		const transactions = await Transaction.find({$and: [{$or: [{lender: user._id}, {borrower: user._id}]}, {$or: [{endDate: {$lt: new Date()}}, {status: 1}]}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
 		Logger.shared.log(`Successfully got past transaction for user with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
@@ -120,15 +134,19 @@ transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put 
 	Logger.shared.log(`Setting status ${req.body.status} for transaction with id: ${req.params.id}`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const transaction = await Transaction.findById(req.params.id).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name']}, {path: 'lender', select: ['name']}]);
-		if (JSON.stringify(user._id) == JSON.stringify(transaction.borrower._id) && req.body.status == 1) { //the borrower can only cancel a request
+		const transaction = await Transaction.findById(req.params.id).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name', 'apnTokens']}, {path: 'lender', select: ['name', 'apnTokens']}]);
+		// if (JSON.stringify(user._id) == JSON.stringify(transaction.borrower._id) && req.body.status == 1) { //the borrower can only cancel a request
+		if (JSON.stringify(user._id) == JSON.stringify(transaction.borrower._id) && req.body.status == 1 && transaction.status == 0) {
 			await Transaction.updateOne({_id: req.params.id}, {status: 1});
+			PushNotificationHandler.shared.sendPushNotification("Booking cancelled", `${user.name} has cancelled the booking of ${transaction.product.name}`, transaction.lender.apnTokens);
 		}
 		else if (JSON.stringify(user._id) == JSON.stringify(transaction.lender._id)){
 			if (req.body.status == 2 && transaction.status == 0){
 				await Transaction.updateOne({_id: req.params.id}, {status: 2});
+				PushNotificationHandler.shared.sendPushNotification("Booking approved", `${user.name} has approved the booking of ${transaction.product.name}`, transaction.borrower.apnTokens);
 			} else if (req.body.status == 1){
 				await Transaction.updateOne({_id: req.params.id}, {status: 1});
+				PushNotificationHandler.shared.sendPushNotification("Booking cancelled", `${user.name} has cancelled the booking of ${transaction.product.name}`, transaction.borrower.apnTokens);
 			}
 		}
 		else {
@@ -138,7 +156,7 @@ transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put 
 		Logger.shared.log(`Successfully set status ${req.body.status} for transaction with id: ${req.params.id}`);
 		res.status(200).json({status: "success"});
 	} catch (e) {
-		Logger.shared.log(`Setting status ${req.body.status} failed for transaction with id: ${req.params.id}`, 1);
+		Logger.shared.log(`Setting status ${req.body.status} failed for transaction with id: ${req.params.id}; ${e}`, 1);
 		res.status(500).json({ message: e });
 	}
 });

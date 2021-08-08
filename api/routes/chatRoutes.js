@@ -4,6 +4,7 @@ import Product from "../models/Product.js"
 import Chat from "../models/Chat.js"
 
 import Logger from "../../Logger.js"
+import PushNotificationHandler from "../../PushNotificationHandler.js"
 
 const chatRouter = express.Router();
 
@@ -26,14 +27,41 @@ chatRouter.post("/sendMessage", async (req, res) => {
 		};
 
 		if (req.body.chatId) {// I would put that into a put("/updateChat/:id") route, but not important
-			const chat = await Chat.findById(req.body.chatId).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
+			const chat = await Chat.findById(req.body.chatId).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			if (JSON.stringify(chat.borrower._id) != JSON.stringify(userId) && JSON.stringify(chat.lender._id) != JSON.stringify(userId)) { throw "User not authorized"; }
 			await Chat.findByIdAndUpdate(req.body.chatId, { $push: { messages: message } });
+
+			var senderName = "";
+			var recipientTokens = [];
+
+			if (userId == chat.lender._id) {
+				senderName = chat.lender.name;
+				recipientTokens = chat.borrower.apnTokens;
+			} else {
+				senderName = chat.borrower.name;
+				recipientTokens = chat.lender.apnTokens;
+			}
+
+			PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
+
 		} else {
 			// not perfectly tested yet, I hope there is no problem if req.body.recipient is undefined
 			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			if (existingChat) {
 				await Chat.findByIdAndUpdate(existingChat._id, { $push: { messages: message } });
+
+				var senderName = "";
+				var recipientTokens = [];
+
+				if (userId == existingChat.lender._id) {
+					senderName = existingChat.lender.name;
+					recipientTokens = existingChat.borrower.apnTokens;
+				} else {
+					senderName = existingChat.borrower.name;
+					recipientTokens = existingChat.lender.apnTokens;
+				}
+
+				PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
 			} else {
 				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'User', select:['name']}]);
 				if (product.user._id == userId && !req.body.recipient) { throw "missing parameters"; }
@@ -45,6 +73,19 @@ chatRouter.post("/sendMessage", async (req, res) => {
 					"messages": [message]
 				}
 				const newChat = await Chat.create(chat);
+
+				var senderName = "";
+				var recipientTokens = [];
+
+				if (userId == newChat.lender._id) {
+					senderName = newChat.lender.name;
+					recipientTokens = newChat.borrower.apnTokens;
+				} else {
+					senderName = newChat.borrower.name;
+					recipientTokens = newChat.lender.apnTokens;
+				}
+
+				PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
 			}
 		}
 
@@ -66,7 +107,7 @@ chatRouter.post("/getChatsOfUser", async (req, res) => {
 		const userId = user._id;
 		if (!userId) { Logger.shared.log(`Authentication for getting chats failed`, 1); throw "User uid not found"; }
 
-		const chats = await Chat.find({ $or: [{ borrower: userId }, { lender: userId }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
+		const chats = await Chat.find({ $or: [{ borrower: userId }, { lender: userId }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', "picture"]}, {path: 'lender', model: "User", select: ['name', "picture"]}, {path:'messages.sender', model:'User', select: ['name']}]);
 
 		Logger.shared.log(`Sent chats of users successfully`);
 		res.status(200).json(chats);
@@ -80,7 +121,7 @@ chatRouter.post("/chat/:id", async (req,res) => {
 	Logger.shared.log(`Getting chat with id: ${req.params.id}`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const chat = await Chat.findById(req.params.id).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
+		const chat = await Chat.findById(req.params.id).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name', "picture"]}, {path:'messages.sender', model:'User', select: ['name', "picture"]}]);
 		console.log("chat, user: ", chat, user, JSON.stringify(chat.borrower._id), JSON.stringify(user._id));
 		if (!user || (JSON.stringify(chat.borrower._id) != JSON.stringify(user._id) && JSON.stringify(chat.lender._id) != JSON.stringify(user._id))){
 			throw "No access to chat!";
