@@ -43,7 +43,9 @@ const ProductSchema = mongoose.Schema({ //to be extended
         required: true
     },
     thumbnail: ImageSchema,
-    pictures: [ImageSchema]
+    pictures: [ImageSchema],
+    picturesFitted: [ImageSchema],
+    thumbnails: [ImageSchema]
 });
 
 // ProductSchema.index({name: "text", location: "2dsphere"});

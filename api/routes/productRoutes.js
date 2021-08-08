@@ -82,9 +82,11 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
   Logger.shared.log(`Uploading new product started`)
     try {
         const images = [];
+        const fittedImages = [];
+        const thumbnails = [];
+        let thumbnail;
         let product, body;
         let firstImage = true;
-        let thumbnail;
 
         for (const file of req.files){
             if (file.fieldname == "product"){
@@ -93,8 +95,11 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
                 Logger.shared.log(`Received product information successfully`);
             } else if (file.fieldname == "image"){
                 images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+                const thumb = await convertPicture(file);
+                thumbnails.push(thumb);
+                fittedImages.push(await convertPicture2(file));
                 if (firstImage) {
-                    thumbnail = await convertPicture(file)
+                    thumbnail = thumb;
                 }
                 firstImage = false;
             }
@@ -104,6 +109,8 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
         product["user"] = user._id;
 
         product.pictures = images;
+        product.thumbnails = thumbnails;
+        product.picturesFitted = fittedImages;
         if(images.length > 0){
           // let thumbnail = await getThumbnail(images[0]);
           product.thumbnail = thumbnail;
@@ -159,13 +166,24 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
     try {
         Logger.shared.log(`Updating product with id ${req.params.productId}`);
         const images = [];
+        const fittedImages = [];
+        const thumbnails = [];
+        let thumbnail;
         let product, body;
+        let firstImage = true;
         for (const file of req.files){
             if (file.fieldname == "product"){
                 body = JSON.parse(fs.readFileSync(file.path).toString());
                 product = body.product;
             } else if (file.fieldname == "image"){
                 images.push({data: fs.readFileSync(file.path), contentType: file.mimetype});
+                const thumb = await convertPicture(file);
+                thumbnails.push(thumb);
+                fittedImages.push(await convertPicture2(file));
+                if (firstImage) {
+                    thumbnail = thumb;
+                }
+                firstImage = false;
             }
         }
         const user = await User.findOne({uid: body.uid}); // add uid later
@@ -176,6 +194,12 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
         }
         product["user"] = user._id
         product.pictures = images;
+        product.thumbnails = thumbnails;
+        product.picturesFitted = fittedImages;
+        if(images.length > 0){
+          // let thumbnail = await getThumbnail(images[0]);
+          product.thumbnail = thumbnail;
+        }
         product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
         await Product.replaceOne({ _id: req.params.productId }, product);
         Logger.shared.log(`Successfully updated product with id ${req.params.productId}`);
@@ -201,5 +225,22 @@ const convertPicture = async (file) => new Promise(resolve => {
       })
   })
 });
+
+
+const convertPicture2 = async (file) => new Promise(resolve => {
+    sharp(file.path)
+    .metadata()
+    .then( info => {
+      sharp(file.path)
+        .resize({ height:600, width:800, fit: "contain"})
+        .toFile(file.path + "_fitted")
+        .then(function(newFileInfo){
+            let thumbnail = {data: fs.readFileSync(file.path + "_fitted"), contentType: file.mimetype};
+            console.log("image ready");
+            resolve(thumbnail);
+        })
+    })
+  });
+
 
 export default productsRouter;
