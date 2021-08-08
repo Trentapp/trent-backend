@@ -192,7 +192,7 @@ const convertPicture = async (file) => new Promise(resolve => {
   .then( info => {
     sharp(file.path)
       .extract({ width: Math.min(info.width, info.height), height: Math.min(info.width, info.height), left: parseInt((info.width - Math.min(info.width, info.height)) / 2), top: parseInt((info.height - Math.min(info.width, info.height)) / 2) })
-      .resize({ height:200, width:200})
+      .resize({ height:350, width:350})
       .toFile(file.path + "_thumb")
       .then(function(newFileInfo){
           let thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype};
