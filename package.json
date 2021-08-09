@@ -21,7 +21,6 @@
   "homepage": "https://github.com/Fairleih/fairleih-backend#readme",
   "dependencies": {
     "apn": "^2.2.0",
-    "axios": "^0.21.1",
     "cors": "^2.8.5",
     "dotenv": "^9.0.2",
     "express": "^4.17.1",

@@ -1,5 +1,4 @@
 import mangopay from "mangopay2-nodejs-sdk"
-import axios from "axios"
 import dotenv from "dotenv"
 
 import User from "./api/models/User.js"
@@ -118,23 +117,6 @@ class MangoPayClient {
 				transaction.isPaid = true;
 			})
 	}
-
-
-
-	// axios
-	// 	.post(`https://api.sandbox.mangopay.com/v2.01/${mangopayId}/wallets/`, {
-	// 		"Owners": [ mangopayId ],
-	// 		"Description": `Wallet ${mangopayId}`,
-	// 		"Currency": "EUR"
-	// 	}).then(async res => {
-	// 		// TODO: Check for errors
-	// 		console.log(res);
-	// 		let user = await User.findById(_id);
-	// 		user.walletId = res.id;
-	// 		await User.replaceById(_id, user);
-	// 	}).catch(error => {
-	// 		console.error(error)
-	// 	})
 
 }
 
