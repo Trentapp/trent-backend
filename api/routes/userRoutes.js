@@ -31,7 +31,7 @@ userRouter.post("/create", async (req, res) => {
 userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user'], populate: {path: 'user', model: 'User', select:['_id']}}]).orFail();
+        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user', 'desc', 'location'], populate: {path: 'user', model: 'User', select:['_id']}}]).orFail();
         Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
         res.status(200).json(user);
     } catch (e) {
@@ -44,7 +44,7 @@ userRouter.post("/user", async (req, res) => {
 userRouter.get("/user-profile/:id", async (req, res) => {
   Logger.shared.log(`Getting public user profile with id ${req.params.id}`);
     try {
-        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'desc', 'prices', 'thumbnail', 'location']}]).orFail();
+        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'desc', 'location']}]).orFail();
         Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
         res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings, picture: user.picture});//should address and mail be publicly accessible? No :)
     } catch(e) {
@@ -57,7 +57,7 @@ userRouter.get("/user-profile/:id", async (req, res) => {
 userRouter.get("/user-inventory/:id", async (req, res) => {
   Logger.shared.log(`Getting inventory of user with id ${req.params.id}`);
     try {
-        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail']}]).orFail();
+        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'desc', 'location']}]).orFail();
         Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
         res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings, picture: user.picture});//should address and mail be publicly accessible? No :)
     } catch(e) {
