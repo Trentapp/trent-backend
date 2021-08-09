@@ -232,7 +232,7 @@ const convertPicture2 = async (file) => new Promise(resolve => {
     .metadata()
     .then( info => {
       sharp(file.path)
-        .resize({ height:600, width:800, fit: "contain"})
+        .resize({ height:600, width:800, fit: "contain", background: {r:255,g:255,b:255,alpha:1}})
         .toFile(file.path + "_fitted")
         .then(function(newFileInfo){
             let thumbnail = {data: fs.readFileSync(file.path + "_fitted"), contentType: file.mimetype};
