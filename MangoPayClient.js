@@ -1,7 +1,9 @@
 import mangopay from "mangopay2-nodejs-sdk"
+import axios from "axios"
 import dotenv from "dotenv"
 
 import User from "./api/models/User.js"
+import Transaction from "./api/models/Transaction.js"
 
 class MangoPayClient {
 
@@ -24,15 +26,71 @@ class MangoPayClient {
 	    Birthday: birthday,
 	    Nationality: nationality,
 	    CountryOfResidence: "DE",
-	    Email: "max@mustermann.de",
+	    Email: mail,
 		}).then(async function (response) {
+			// TODO: Check for errors
 			console.log(response.Id);
     	console.log("Natural user created", response);
 			const user = await User.findOne({ uid: uid });
 			user.mangopayId = response.Id;
-			await User.replaceOne({ uid : uid }, user);
+			await User.findByIdAndUpdate({ uid : uid }, user);
+			MangoPayClient.shared.createWallet(user._id, response.Id);
 		});
 	}
+
+	createWallet(_id, mangopayId) {
+		console.log(`creating wallet; _id:${_id}; mangopay: ${mangopay}`);
+
+		this.api.Wallets.create({
+			"Owners": [ mangopayId ],
+			"Description": `Wallet ${mangopayId}`,
+			"Currency": "EUR"
+		}).then(async function (response) {
+			// TODO: Check for errors
+			console.log("Adding walletId to user in db");
+			await User.findByIdAndUpdate(_id, {walletId: response.Id});
+		});
+	}
+
+	// addNewTransaction (uid, transactionId) {
+	// 	let user = await User.findOne({uid:uid};
+	// 	let mangopayId = user.mangopayId;
+	// 	axios
+	// 		.post(`https://api.sandbox.mangopay.com/v2.01/${ClientId}/transfers/`, {
+	// 			"AuthorId": mangopayId,
+	// 			"DebitedFunds": {
+	// 				"Currency": "EUR",
+	// 				"Amount": 12
+	// 			},
+	// 			"Fees": {
+	// 				"Currency": "EUR",
+	// 				"Amount": 12
+	// 			},
+	// 			"DebitedWalletId": "8519987",
+	// 			"CreditedWalletId": "8494559"
+	// 		}).then(res => {
+	// 			// TODO: Check for errors
+	// 			let transaction = await Transaction.findById(transactionId);
+	// 			transaction.isPaid = true;
+	// 		})
+	// }
+
+
+
+	// axios
+	// 	.post(`https://api.sandbox.mangopay.com/v2.01/${mangopayId}/wallets/`, {
+	// 		"Owners": [ mangopayId ],
+	// 		"Description": `Wallet ${mangopayId}`,
+	// 		"Currency": "EUR"
+	// 	}).then(async res => {
+	// 		// TODO: Check for errors
+	// 		console.log(res);
+	// 		let user = await User.findById(_id);
+	// 		user.walletId = res.id;
+	// 		await User.replaceById(_id, user);
+	// 	}).catch(error => {
+	// 		console.error(error)
+	// 	})
 
 }
 

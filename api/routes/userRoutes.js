@@ -5,6 +5,7 @@ import fs from "fs"
 import User from "../models/User.js"
 import Product from "../models/Product.js"
 
+import MangoPayClient from "../../MangoPayClient.js"
 import Logger from "../../Logger.js"
 
 const upload = multer({dest: "../uploads/"});
@@ -167,6 +168,23 @@ userRouter.post("/addAPNToken", async (req, res) => {
         res.status(200).json({ status: "success" });
     } catch (e) {
       Logger.shared.log(`Error adding new APN Token: ${e}`);
+        res.status(500).json({ message: e });
+    }
+});
+
+userRouter.post("/createMangopayUser", async (req, res) => {
+  Logger.shared.log("Creating Mangopay user");
+    try {
+        if(!req.body.birthday || !req.body.natonality || !req.body.countryOfResidence) {
+          throw "Missing parameters";
+        }
+        const user = await User.findOne({ uid: req.body.uid });
+        if (!user.mangopayId && !user.walletId) {
+          await MangoPayClient.shared.createNewUser(uid, "first name", user.name, birthday, nationality, countryOfResidence, user.mail);
+        }
+        res.status(200).json({ status: "success" });
+    } catch (e) {
+      Logger.shared.log(`Error creating Mangopay User: ${e}`);
         res.status(500).json({ message: e });
     }
 });

@@ -6,7 +6,6 @@ import multer from "multer"
 import fs from "fs"
 
 import Logger from "../../Logger.js"
-import MangoPayClient from "../../MangoPayClient.js"
 
 import Product from "../models/Product.js"
 import User from "../models/User.js"
@@ -29,7 +28,6 @@ const productsRouter = express.Router();
 productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&dayPriceMax=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
     Logger.shared.log(`Querying for /products/ with ${req.params}`);
-    // MangoPayClient.shared.createNewUser("mRI6b1X8BvPPiVcgRl5Li48uHjU2", "John", "Appleseed", 19052347, "DE", "DE", "john@appleseed.com");
     const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 20;
     const page = req.query.page ? parseInt(req.query.page, 10) : 0;
 

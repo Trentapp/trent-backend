@@ -24,14 +24,22 @@ const TransactionSchema = mongoose.Schema({ //to be extended
 		type: Date,
 		required: true
 	},
-	status: { 
+	status: {
 		type: Number,
 		required: true
 	},
 	totalPrice: {
 		type: Number,
 		required: true
-	}
+	},
+  lenderEarnings: {
+		type: Number,
+		required: true
+	},
+  isPaid: {
+		type: Boolean,
+		required: true
+	},
 });
 
 TransactionSchema.index({name: "text"});
