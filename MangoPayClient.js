@@ -42,9 +42,9 @@ class MangoPayClient {
 		console.log(`creating wallet; _id:${_id}; mangopay: ${mangopay}`);
 
 		this.api.Wallets.create({
-			"Owners": [ mangopayId ],
-			"Description": `Wallet ${mangopayId}`,
-			"Currency": "EUR"
+			Owners: [ mangopayId ],
+			Description: `Wallet ${mangopayId}`,
+			Currency: "EUR"
 		}).then(async function (response) {
 			// TODO: Check for errors
 			console.log("Adding walletId to user in db");
@@ -52,28 +52,72 @@ class MangoPayClient {
 		});
 	}
 
-	// addNewTransaction (uid, transactionId) {
-	// 	let user = await User.findOne({uid:uid};
-	// 	let mangopayId = user.mangopayId;
-	// 	axios
-	// 		.post(`https://api.sandbox.mangopay.com/v2.01/${ClientId}/transfers/`, {
-	// 			"AuthorId": mangopayId,
-	// 			"DebitedFunds": {
-	// 				"Currency": "EUR",
-	// 				"Amount": 12
-	// 			},
-	// 			"Fees": {
-	// 				"Currency": "EUR",
-	// 				"Amount": 12
-	// 			},
-	// 			"DebitedWalletId": "8519987",
-	// 			"CreditedWalletId": "8494559"
-	// 		}).then(res => {
-	// 			// TODO: Check for errors
-	// 			let transaction = await Transaction.findById(transactionId);
-	// 			transaction.isPaid = true;
-	// 		})
-	// }
+	async createCardRegistration(uid) {
+		const user = await User.findOne({uid:uid});
+		this.api.CardRegistration.create({
+			UserId : user.mangopayId,
+			Currency : "EUR",
+			CardType : "CB_VISA_MASTERCARD"
+		}).then(async function (response) {
+			// TODO: Check for errors
+			console.log(`CardRegistrationURL: ${response.CardRegistrationURL}`);
+			// await User.findByIdAndUpdate(_id, {walletId: response.Id});
+		});
+	}
+
+	async updateCardRegistration(uid, registrationData) {
+		const user = await User.findOne({uid:uid});
+		this.api.CardRegistration.update({
+			RegistrationData : registrationData
+		}).then(async function (response) {
+			// TODO: Check for errors
+			// console.log(`CardRegistrationURL: ${response.CardRegistrationURL}`);
+			// await User.findByIdAndUpdate(_id, {walletId: response.Id});
+		});
+	}
+
+	async createPayIn(uid, transactionId) {
+		const user = await User.findOne({uid:uid});
+		const transaction = Transaction.findById(transactionId);
+		this.api.PayIns.create({
+			AuthorId : user.mangopayId,
+			CreditedWalletId : transaction.lender.walletId,
+			DebitedFunds : transaction.totalPrice,
+			Fees : transfers.lenderEarnings,
+			SecureModeReturnURL : "trentapp.com",
+			CardId : "",
+			IpAddress : "",
+			BrowserInfo : "",
+		}).then(async function (response) {
+			// TODO: Check for errors
+			// console.log("Adding walletId to user in db");
+			// await User.findByIdAndUpdate(_id, {walletId: response.Id});
+		});
+	}
+
+	async addNewTransaction (uid, transactionId) {
+		let user = await User.findOne({uid:uid});
+		let mangopayId = user.mangopayId;
+
+		const transaction = await Transaction.findById(transactionId);
+
+		this.api.Transfer.create({
+			AuthorId: mangopayId,
+			DebitedFunds: {
+				Currency: "EUR",
+				Amount: 12
+			},
+			Fees: {
+				Currency: "EUR",
+				Amount: 12
+			},
+			DebitedWalletId: "8519987",
+			CreditedWalletId: "8494559"
+		}).then(res => {
+				// TODO: Check for errors
+				transaction.isPaid = true;
+			})
+	}
 
 
 
