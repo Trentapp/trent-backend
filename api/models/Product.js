@@ -1,8 +1,7 @@
 import mongoose from "mongoose"
 
 export const AddressSchema = mongoose.Schema({
-    street: String,
-    houseNumber: String,
+    streetWithNr: String,
     zipcode: String,
     city: String,
     country: String
