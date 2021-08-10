@@ -196,9 +196,15 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
         product.pictures = images;
         product.thumbnails = thumbnails;
         product.picturesFitted = fittedImages;
-        if(images.length > 0){
-          // let thumbnail = await getThumbnail(images[0]);
-          product.thumbnail = thumbnail;
+        product.thumbnail = thumbnail;
+        console.log(images)
+        console.log(oldProduct)
+        if(images.length == 0){
+            product.pictures = oldProduct.pictures;
+            product.thumbnails = oldProduct.thumbnails;
+            product.picturesFitted = oldProduct.picturesFitted;
+            product.thumbnail = oldProduct.thumbnail;
+            console.log(product.picturesFitted);
         }
         product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
         await Product.replaceOne({ _id: req.params.productId }, product);
