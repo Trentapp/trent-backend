@@ -42,7 +42,9 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 			"startDate": req.body.startDate,
 			"endDate": req.body.endDate,
 			"status": 0,
-			"totalPrice": totalPrice
+			"totalPrice": totalPrice,
+			"lenderEarnings":1,
+			"isPaid": false,
 		};
 		const newTransaction = await Transaction.create(transaction);
 
@@ -200,7 +202,7 @@ transactionRouter.post("/payIn", async (req,res) => {
 		if(!req.body.uid || !req.body.transactionId || !req.body.cardId){
 			throw "User or registrationData not found";
 		}
-		MangoPayClient.shared.createPayIn(uid, req.body.transactionId, req.body.cardId, "0.0.0.0", "userAgent");
+		const response = await MangoPayClient.shared.createPayIn(req.body.uid, req.body.transactionId, req.body.cardId, "2003:C8:CF2F:4218:D017:5412:6570:7E26", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15");
 		Logger.shared.log(`Successfully payed in`);
 		res.status(200).json(response);
 	} catch (e) {

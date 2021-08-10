@@ -35,7 +35,7 @@ class MangoPayClient {
 			user.mangopayId = response.Id;
 			// console.log(`user mangopay id: ${user.mangopayId}`);
 			await User.replaceOne({ uid : uid }, user);
-			MangoPayClient.shared.createWallet(user._id, response.Id);
+			// MangoPayClient.shared.createWallet(user._id, response.Id);
 		});
 	}
 
@@ -85,19 +85,28 @@ class MangoPayClient {
 	})
 	}
 
-	async createPayIn(uid, transactionId, cardId) {
+	async createPayIn(uid, transactionId, cardId, ip, userAgent) {
 		return new Promise(async resolve => {
 			const user = await User.findOne({uid:uid});
-			const transaction = Transaction.findById(transactionId).populate({path:'lender', model:'User'});
+			console.log(`transaction: ${transactionId}`);
+			const transaction = await Transaction.findById(transactionId).populate([{path:'lender', model:'User', select:['walletId']}]);
 			this.api.PayIns.create({
+				PaymentType: "CARD",
+				ExecutionType: "DIRECT",
 				AuthorId : user.mangopayId,
 				CreditedWalletId : transaction.lender.walletId,
-				DebitedFunds : transaction.totalPrice,
-				Fees : transfers.lenderEarnings,
-				SecureModeReturnURL : "trentapp.com",
+				DebitedFunds : {
+					Currency:"EUR",
+					Amount: transaction.totalPrice,
+				},
+				Fees : {
+					Currency:"EUR",
+					Amount: transaction.lenderEarnings,
+				},
+				SecureModeReturnURL : "https://www.trentapp.com",
 				CardId : cardId,
-				IpAddress : ip,
-				BrowserInfo : userAgent,
+				// IpAddress : ip,
+				// BrowserInfo : userAgent,
 			}).then(async function (response) {
 				// TODO: Check for errors
 				// console.log("Adding walletId to user in db");
