@@ -7,9 +7,19 @@ const UserSchema = mongoose.Schema({ //to be extended
       type: String,
       required: true
     },
+    firstName: {
+      type: String,
+      required: true
+    },
+    lastName: {
+      type: String,
+      required: true
+    },
     name: {
-        type: String,
-        required: true
+      type: String,
+      default: function() {
+        return this.firstName + " " + this.lastName;
+      }
     },
     mail: String,//I would use email instead of mail
     //picture: String,
