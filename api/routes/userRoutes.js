@@ -172,22 +172,4 @@ userRouter.post("/addAPNToken", async (req, res) => {
     }
 });
 
-userRouter.post("/createMangopayUser", async (req, res) => {
-  Logger.shared.log("Creating Mangopay user");
-    try {
-        if(!req.body.uid || !req.body.birthday || !req.body.nationality || !req.body.countryOfResidence) {
-          throw "Missing parameters";
-        }
-        const user = await User.findOne({ uid: req.body.uid });
-        console.log(`user with uid ${req.body.uid}`);
-        if (!user.mangopayId && !user.walletId) {
-          await MangoPayClient.shared.createNewUser(req.body.uid, "first name", user.name, req.body.birthday, req.body.nationality, req.body.countryOfResidence, user.mail);
-        }
-        res.status(200).json({ status: "success" });
-    } catch (e) {
-      Logger.shared.log(`Error creating Mangopay User: ${e}`);
-        res.status(500).json({ message: e });
-    }
-});
-
 export default userRouter;
