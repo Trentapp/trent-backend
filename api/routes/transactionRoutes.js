@@ -79,7 +79,7 @@ transactionRouter.post("/findByUser", async (req, res) => {
 	Logger.shared.log("Getting all transactions of a user");
 	try {
 		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$or: [{lender: user._id}, {borrower: user._id}]}).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		const transactions = await Transaction.find({$or: [{lender: user._id}, {borrower: user._id}]}).sort([['startDate', -1]]).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
 		Logger.shared.log(`Successfully got transactions for user with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
