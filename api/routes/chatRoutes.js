@@ -122,10 +122,15 @@ chatRouter.post("/chat/:id", async (req,res) => {
 	try {
 		const user = await User.findOne({uid: req.body.uid});
 		const chat = await Chat.findById(req.params.id).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name', "picture"]}, {path:'messages.sender', model:'User', select: ['name', "picture"]}]);
-		console.log("chat, user: ", chat, user, JSON.stringify(chat.borrower._id), JSON.stringify(user._id));
 		if (!user || (JSON.stringify(chat.borrower._id) != JSON.stringify(user._id) && JSON.stringify(chat.lender._id) != JSON.stringify(user._id))){
 			throw "No access to chat!";
 		}
+		for (let i = 0; i < chat.messages.length; i++) {
+			if (JSON.stringify(chat.messages[i].sender._id) != JSON.stringify(user._id)) {
+				chat.messages[i].read = true;
+			}
+		}
+		await Chat.updateOne({_id: chat._id}, {messages: chat.messages});
 		Logger.shared.log(`Successfully sent chat with id: ${req.params.id}`);
 		res.status(200).json(chat);
 	} catch (e) {
