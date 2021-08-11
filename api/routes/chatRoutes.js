@@ -139,6 +139,38 @@ chatRouter.post("/chat/:id", async (req,res) => {
 	}
 })
 
+// get chats of specific user with new messages
+chatRouter.post("/getNewMessages", async (req, res) => {
+	Logger.shared.log(`Getting chats using /chats/get`);
+	try {
+		if (!req.body.uid) { throw "Missing parameters"; }
+
+		const user = await User.findOne({ uid: req.body.uid });
+		const userId = user._id;
+		if (!userId) { Logger.shared.log(`Authentication for getting chats failed`, 1); throw "User uid not found"; }
+
+		const chats = await Chat.find({ $or: [{ borrower: userId }, { lender: userId }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', "picture"]}, {path: 'lender', model: "User", select: ['name', "picture"]}, {path:'messages.sender', model:'User', select: ['name']}]);
+		let newMsgChats = [];
+		for (let j = 0; j < chats.length; j++) {
+			const chat = chats[j];
+			for (let i = 0; i < chat.messages.length; i++) {
+				if (!chat.messages[i].read && JSON.stringify(chat.messages[i].sender._id) != JSON.stringify(user._id)) {
+					newMsgChats.push(chats[j]);
+					break;
+				}
+			}
+		}
+		console.log(newMsgChats)
+		Logger.shared.log(`Sent chats of users successfully`);
+		res.status(200).json(newMsgChats);
+	} catch (e) {
+		Logger.shared.log(`Getting chats failed: ${e}`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
+
+
 // Not secure yet. I will either make it secure or find another way to solve it so I don't need that function soon
 //attention: if that method is called and the corresponding chat does not exist yet, the chat is created
 chatRouter.post("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
