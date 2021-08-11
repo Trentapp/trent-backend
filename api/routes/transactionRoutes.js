@@ -118,11 +118,11 @@ transactionRouter.post("/findByBorrower", async (req,res) => {
 	}
 });
 
-transactionRouter.post("/all", async (req,res) => {
+transactionRouter.post("/getUpcoming", async (req,res) => {
 	try {
 		Logger.shared.log(`Getting all transactions of user`);
 		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$and: [{$or:[{borrower: user._id}, {lender: user._id} ]}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address']}, {path: 'borrower', select: ['name', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		const transactions = await Transaction.find({$and: [{$or:[{borrower: user._id}, {lender: user._id} ]}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
 		Logger.shared.log(`Successfully got transaction for user with id: ${user._id}`);
 		res.status(200).json(transactions);
 	} catch (e) {
