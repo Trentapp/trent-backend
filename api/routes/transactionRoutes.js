@@ -74,7 +74,19 @@ transactionRouter.post("/transaction/:id", async (req,res) => {
 	}
 });
 
-//small problem: If someone goes to the backend API, he could see all the transactions for a user, so perhaps change query by user._id to query by user.uid, but not high priority
+//find all transactions of a user
+transactionRouter.post("/findByUser", async (req, res) => {
+	Logger.shared.log("Getting all transactions of a user");
+	try {
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$or: [{lender: user._id}, {borrower: user._id}]}).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		Logger.shared.log(`Successfully got transactions for user with id: ${user._id}`);
+		res.status(200).json(transactions);
+	} catch (e) {
+		Logger.shared.log(`Failed getting transaction for user ${e}`, 1);
+		res.status(500).json({ message: e });
+	}
+})
 
 //find by lender and find by borrower now only return current transactions (not cancelled and not enddate < now)
 transactionRouter.post("/findByLender", async (req,res) => {
