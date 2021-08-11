@@ -116,6 +116,27 @@ class MangoPayClient {
 		})
 	}
 
+	kycCheck (uid, kycDocumentImages) {
+		// create document
+		// create page
+		// ask for validation
+	}
+
+	async addBankaccount(uid, iban) {
+		const user = await User.findOne({uid:uid});
+		this.api.BankAccount.create({
+			OwnerName : user.firstName + " " + user.lastName,
+			OwnerAddress : {
+				AddressLine1: user.address.streetWithNr,
+				City: user.address.city,
+				PostalCode: user.address.zipcode,
+				// TODO !!
+				Country: "DE"
+			},
+			IBAN: iban
+		});
+	}
+
 	// async addNewTransaction (uid, transactionId) {
 	// 	let user = await User.findOne({uid:uid});
 	// 	let mangopayId = user.mangopayId;

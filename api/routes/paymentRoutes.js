@@ -73,4 +73,38 @@ transactionRouter.post("/payIn", async (req,res) => {
 	}
 });
 
+transactionRouter.post("/registerLender", async (req,res) => {
+	Logger.shared.log(`Registering Lender`);
+	try {
+		if(!req.body.uid || !req.body.kycFront || !req.body.kycBack || !req.body.streetWithNr || !req.body.city || !req.body.zipcode || !req.body.country || !req.body.iban){
+			throw "Parameters missing";
+		}
+
+		// add address to user
+		const user = await User.findOne({uid:req.body.uid});
+		user.address = {
+			streetWithNr: req.body.streetWithNr,
+			city: req.body.city,
+			zipcode: req.body.zipcode,
+			country: req.body.country
+		};
+
+		await User.replaceOne({uid:req.body.uid}, user);
+
+		// add kyc
+		await MangoPayClient.shared.kycCheck(req.body.uid, [req.body.kycFront, req.body.kycBack]);
+
+		// add bankaccount
+		await MangoPayClient.shared.addBankaccount(req.body.uid, req.body.iban) {
+			
+		}
+
+		Logger.shared.log(`Successfully registered lender`);
+		res.status(200).json(response);
+	} catch (e) {
+		Logger.shared.log(`Failed to register lender: ${e}`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
 export default paymentRouter;
