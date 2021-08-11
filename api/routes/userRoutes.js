@@ -5,6 +5,7 @@ import fs from "fs"
 import User from "../models/User.js"
 import Product from "../models/Product.js"
 
+import MangoPayClient from "../../MangoPayClient.js"
 import Logger from "../../Logger.js"
 
 const upload = multer({dest: "../uploads/"});

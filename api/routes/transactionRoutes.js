@@ -5,6 +5,7 @@ import Transaction from "../models/Transaction.js"
 
 import Logger from "../../Logger.js"
 import PushNotificationHandler from "../../PushNotificationHandler.js"
+import MangoPayClient from "../../MangoPayClient.js"
 
 const transactionRouter = express.Router();
 
@@ -41,7 +42,9 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 			"startDate": req.body.startDate,
 			"endDate": req.body.endDate,
 			"status": 0,
-			"totalPrice": totalPrice
+			"totalPrice": totalPrice,
+			"lenderEarnings":1,
+			"isPaid": false,
 		};
 		const newTransaction = await Transaction.create(transaction);
 
