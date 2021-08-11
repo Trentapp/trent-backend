@@ -26,6 +26,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 			"read": false
 		};
 
+		let chatId; //for redirecting to the right url
 		if (req.body.chatId) {// I would put that into a put("/updateChat/:id") route, but not important
 			const chat = await Chat.findById(req.body.chatId).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			if (JSON.stringify(chat.borrower._id) != JSON.stringify(userId) && JSON.stringify(chat.lender._id) != JSON.stringify(userId)) { throw "User not authorized"; }
@@ -45,9 +46,11 @@ chatRouter.post("/sendMessage", async (req, res) => {
 			if (recipientTokens?.length > 0){
 				PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
 			}
+
+			chatId = req.body.chatId;
 		} else {
 			// not perfectly tested yet, I hope there is no problem if req.body.recipient is undefined
-			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
+			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			console.log(existingChat)
 			if (existingChat) {
 				await Chat.updateOne({_id: existingChat._id}, { $push: { messages: message } });
@@ -66,8 +69,10 @@ chatRouter.post("/sendMessage", async (req, res) => {
 				if (recipientTokens?.length > 0){
 					PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
 				}
+
+				chatId = existingChat._id;
 			} else {
-				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'User', select:['name']}]);
+				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'User', select:['name', 'apnTokens']}]);
 				if (product.user._id == userId && !req.body.recipient) { throw "missing parameters"; }
 
 				const chat = {
@@ -92,11 +97,13 @@ chatRouter.post("/sendMessage", async (req, res) => {
 				if (recipientTokens?.length > 0){
 					PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
 				}
+
+				chatId = newChat._id;
 			}
 		}
 
 		Logger.shared.log(`Successfully sent message for chatId: ${req.body.chatId} concering product: ${req.body.productId}`);
-		res.status(200).json({ status: "success" });
+		res.status(200).json({ status: "success", chatId: chatId });
 	} catch (e) {
 		Logger.shared.log(`Sending message for chatId: ${req.body.chatId} concering product: ${req.body.productId} failed: ${e}`, 1);
 		res.status(500).json({ message: e });
