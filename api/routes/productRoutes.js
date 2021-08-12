@@ -38,7 +38,7 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         filters.name = req.query.name;
     }
     if (req.query.lat && req.query.lng) {
-        let maxDistance = 25/6371;
+        let maxDistance = 5/6371;
         let maxDistMeters = 30000;
         if(req.query.maxDistance){
           maxDistance = req.query.maxDistance / 6371;
