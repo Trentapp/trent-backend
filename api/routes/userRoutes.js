@@ -92,16 +92,16 @@ userRouter.put("/update", async (req, res) => {
 });
 
 userRouter.delete("/delete", async (req, res) => {
-  Logger.shared.log(`Deleting public user profile with id ${req.body.user._id}`);
+  Logger.shared.log(`Deleting public user profile with id ${req.body?.user?._id}`);
     try {
         const user = await User.findOne({ uid: req.body.uid });
         const userId = user._id;
         await Product.deleteMany({ userId: userId });//deletes all products of that user
         await User.deleteOne({ uid: req.body.uid });
         res.status(200).json({ message: "success" });
-        Logger.shared.log(`Successfully deleted user profile with id ${req.body.user._id}`);
+        Logger.shared.log(`Successfully deleted user profile with id ${req.body?.user?._id}`);
     } catch (e) {
-        Logger.shared.log(`Delting user profile with id ${req.body.user._id} failed: ${e}`);
+        Logger.shared.log(`Delting user profile with id ${req.body?.user?._id} failed: ${e}`);
         res.status(500).json({ message: e });
     }
 });
