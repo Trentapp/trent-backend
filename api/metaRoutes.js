@@ -5,7 +5,7 @@ import userRouter from "./routes/userRoutes.js"
 import reviewRouter from "./routes/reviewRoutes.js"
 import transactionRouter from "./routes/transactionRoutes.js"
 import chatRouter from "./routes/chatRoutes.js"
-import paymentRouter from "./routes/chatRoutes.js"
+import paymentRouter from "./routes/paymentRoutes.js"
 
 const router = express.Router();
 

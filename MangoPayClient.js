@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 
 import User from "./api/models/User.js"
 import Transaction from "./api/models/Transaction.js"
+import Logger from "./Logger.js"
 
 class MangoPayClient {
 
@@ -116,25 +117,84 @@ class MangoPayClient {
 		})
 	}
 
-	kycCheck (uid, kycDocumentImages) {
-		// create document
-		// create page
-		// ask for validation
+	async kycCheck (uid, kycDocumentImages) {
+		try {
+			const user = await User.findOne({uid:uid});
+
+			console.log("creating kyc document");
+
+			// create document
+			const documentId = await new Promise( resolve => {
+				this.api.KycDocuments.create({
+					Type : "IDENTITY_PROOF",
+					UserId : user.mangopayId
+				}).then(async function (response) {
+					resolve(response.Id);
+				})
+			})
+
+			console.log("created kyc document");
+
+			// create page
+			for(var i = 0; i < kycDocumentImages.length; i++){
+				await new Promise(resolve => {
+					this.api.KycPage.create({
+						KYCDocumentId : documentId,
+						UserId : user.mangopayId,
+						File : kycDocumentImages[i]
+					}).then(async function (response) {
+						resolve()
+					})
+				})
+			}
+
+			console.log("added pages");
+
+			// ask for validation
+			await new Promise( resolve => {
+				this.api.KycDocuments.update({
+					Status : "VALIDATION_ASKED",
+					UserId : user.mangopayId
+				}).then(async function (response) {
+					resolve();
+				})
+			})
+
+			console.log("asked for validation");
+		} catch (e) {
+			Logger.shared.log(`Error while uploading kyc document: ${e}`, 1)
+		}
+
 	}
 
 	async addBankaccount(uid, iban) {
-		const user = await User.findOne({uid:uid});
-		this.api.BankAccount.create({
-			OwnerName : user.firstName + " " + user.lastName,
-			OwnerAddress : {
-				AddressLine1: user.address.streetWithNr,
-				City: user.address.city,
-				PostalCode: user.address.zipcode,
-				// TODO !!
-				Country: "DE"
-			},
-			IBAN: iban
-		});
+		try {
+			const user = await User.findOne({uid:uid});
+
+				this.api.Users.createBankAccount(
+				user.mangopayId,
+				{
+				UserId: user.mangopayId,
+				Type: "IBAN",
+				OwnerName: user.name,
+				OwnerAddress: {
+						AddressLine1: user.address.streetWithNr,
+						City: user.address.city,
+						PostalCode: user.address.zipcode,
+						// TODO !!
+						Country: "DE"
+				},
+				IBAN: iban,
+				},
+				function (data) {
+				console.log(data)
+				}
+				).catch(function (err) {
+				console.log(err.message)
+				});
+		} catch (e) {
+			Logger.shared.log(`Error while creating: ${e}`);
+		}
 	}
 
 	// async addNewTransaction (uid, transactionId) {
