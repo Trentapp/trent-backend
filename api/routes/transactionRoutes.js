@@ -15,7 +15,6 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 	try {
 		if (!req.body.uid || !req.body.productId || !req.body.startDate || !req.body.endDate) { throw "Missing parameters"; }
 		const user = await User.findOne({ uid: req.body.uid });
-		console.log(req.body.uid, user);
 		const userId = user._id;
 		if (!userId) { Logger.shared.log(`Could not authenticate user`, 1); throw "User uid not found" }
 		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'User', select:['name', 'apnTokens']}]);
