@@ -91,20 +91,22 @@ paymentRouter.post("/registerLender", upload.any(), upload.single("body"), async
 							}
 							Logger.shared.log(`Received lender information successfully`);
 					} else if (file.fieldname == "image"){
-							var photo = {data: fs.readFileSync(file.path), contentType: file.mimetype};
-							var tmp = photo.toString().replace(/[“”‘’]/g,'');
-							kycDocumentImages.push(new Buffer(tmp).toString('base64'));
+							// var photo = await {data: fs.readFileSync(file.path), contentType: file.mimetype};
+							// var tmp = await photo.toString().replace(/[“”‘’]/g,'');
+							// kycDocumentImages.push(new Buffer(tmp).toString('base64'));
+              kycDocumentImages.push(fs.readFileSync(file.path, 'base64'));
 					}
 			}
 
 			console.log("received files successfully");
 
+      const user = await User.findOne({uid:body.uid});
+
 			// add kyc
-			// await MangoPayClient.shared.kycCheck(body.uid, kycDocumentImages);
-			// console.log("kyc checked");
+			await MangoPayClient.shared.kycCheck(user, kycDocumentImages);
+			console.log("kyc checked");
 
 			// add address to user
-			const user = await User.findOne({uid:body.uid});
 			user.address = {
 				streetWithNr: body.address.streetWithNr,
 				city: body.address.city,

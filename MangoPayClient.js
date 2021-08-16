@@ -117,20 +117,28 @@ class MangoPayClient {
 		})
 	}
 
-	async kycCheck (uid, kycDocumentImages) {
+	async kycCheck (user, kycDocumentImages) {
 		try {
-			const user = await User.findOne({uid:uid});
 
 			console.log("creating kyc document");
 
 			// create document
 			const documentId = await new Promise( resolve => {
-				this.api.KycDocuments.create({
+				this.api.Users.createKycDocument(
+					user.mangopayId,
+					{
 					Type : "IDENTITY_PROOF",
 					UserId : user.mangopayId
-				}).then(async function (response) {
+				},
+				function (data) {
+				console.log(data)
+				}
+			).then(async function (response) {
 					resolve(response.Id);
-				})
+				}).catch(function (err) {
+				console.log(err.message)
+				resolve();
+				});
 			})
 
 			console.log("created kyc document");
@@ -138,13 +146,22 @@ class MangoPayClient {
 			// create page
 			for(var i = 0; i < kycDocumentImages.length; i++){
 				await new Promise(resolve => {
-					this.api.KycPage.create({
+					this.api.Users.createKycPage(
+						user.mangopayId,
+						documentId,
+					{
 						KYCDocumentId : documentId,
 						UserId : user.mangopayId,
 						File : kycDocumentImages[i]
+					},
+					function (data) {
+					console.log(data)
 					}).then(async function (response) {
 						resolve()
-					})
+					}).catch(function (err) {
+					console.log(err.message)
+					resolve();
+					});
 				})
 			}
 
@@ -152,12 +169,21 @@ class MangoPayClient {
 
 			// ask for validation
 			await new Promise( resolve => {
-				this.api.KycDocuments.update({
+				this.api.Users.updateKycDocument(
+					user.mangopayId,
+					{
+						Id : documentId,
 					Status : "VALIDATION_ASKED",
 					UserId : user.mangopayId
+				},
+				function (data) {
+				console.log(data)
 				}).then(async function (response) {
 					resolve();
-				})
+				}).catch(function (err) {
+				console.log(err.message)
+				resolve();
+				});
 			})
 
 			console.log("asked for validation");
