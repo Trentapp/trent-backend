@@ -18,30 +18,33 @@ class MangoPayClient {
 		});
 	}
 
-	createNewUser (uid, firstName, lastName, birthday, nationality, countryOfResidence, mail) {
-		this.api.Users.create({
-	    PersonType: "NATURAL",
-	    FirstName: firstName,
-	    LastName: lastName,
-	    Birthday: birthday,
-	    Nationality: nationality,
-	    CountryOfResidence: "DE",
-	    Email: mail,
-		}).then(async function (response) {
-			// TODO: Check for errors
-			console.log(response.Id);
-    	console.log("Natural user created", response);
-			const user = await User.findOne({ uid : uid });
-			console.log(`uid: ${uid}`);
-			user.mangopayId = response.Id;
-			// console.log(`user mangopay id: ${user.mangopayId}`);
-			await User.replaceOne({ uid : uid }, user);
-			// MangoPayClient.shared.createWallet(user._id, response.Id);
+	async createNewUser (uid, firstName, lastName, birthday, nationality, countryOfResidence, mail) {
+		return new Promise(async resolve=> {
+			this.api.Users.create({
+		    PersonType: "NATURAL",
+		    FirstName: firstName,
+		    LastName: lastName,
+		    Birthday: birthday,
+		    Nationality: nationality,
+		    CountryOfResidence: "DE",
+		    Email: mail,
+			}).then(async function (response) {
+				// TODO: Check for errors
+				console.log(response.Id);
+	    	console.log("Natural user created", response);
+				const user = await User.findOne({ uid : uid });
+				console.log(`uid: ${uid}`);
+				user.mangopayId = response.Id;
+				// console.log(`user mangopay id: ${user.mangopayId}`);
+				await User.replaceOne({ uid : uid }, user);
+				resolve();
+				// MangoPayClient.shared.createWallet(user._id, response.Id);
+			});
 		});
 	}
 
 	createWallet(_id, mangopayId) {
-		console.log(`creating wallet; _id:${_id}; mangopay: ${mangopay}`);
+		console.log(`creating wallet; _id:${_id}; mangopayId: ${mangopay}`);
 
 		this.api.Wallets.create({
 			Owners: [ mangopayId ],
@@ -51,6 +54,8 @@ class MangoPayClient {
 			// TODO: Check for errors
 			console.log("Adding walletId to user in db");
 			await User.findByIdAndUpdate(_id, {walletId: response.Id});
+		}).catch(function (err) {
+		console.log(err.message);
 		});
 	}
 
