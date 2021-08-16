@@ -216,7 +216,7 @@ class MangoPayClient {
 				try {
 					console.log(`bankaccountId: ${response.Id}`);
 					user.bankaccountId = response.Id;
-					console.log(`user.bankaccountId: ${response.Id}`);
+					console.log(`user.bankaccountId: ${user.bankaccountId}`);
 					await User.replaceOne({uid:uid}, user);
 					console.log(`added id to userr`);
 				} catch(e) {
