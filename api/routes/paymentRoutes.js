@@ -21,6 +21,7 @@ paymentRouter.post("/createMangopayUser", async (req, res) => {
         console.log(`user with uid ${req.body.uid}`);
         if (!user.mangopayId && !user.walletId) {
           await MangoPayClient.shared.createNewUser(req.body.uid, user.firstName, user.lastName, req.body.birthday, req.body.nationality, req.body.countryOfResidence, user.mail);
+          await MangoPayClient.shared.createWallet(user._id, user.mangopayId);
         }
         res.status(200).json({ status: "success" });
     } catch (e) {

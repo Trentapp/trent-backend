@@ -196,7 +196,6 @@ class MangoPayClient {
 	async addBankaccount(uid, iban) {
 		try {
 			const user = await User.findOne({uid:uid});
-
 				this.api.Users.createBankAccount(
 				user.mangopayId,
 				{
@@ -212,8 +211,18 @@ class MangoPayClient {
 				},
 				IBAN: iban,
 				},
-				function (data) {
-				console.log(data)
+				async function (response) {
+				console.log(response);
+				try {
+					console.log(`bankaccountId: ${response.Id}`);
+					user.bankaccountId = response.Id;
+					console.log(`user.bankaccountId: ${response.Id}`);
+					await User.replaceOne({uid:uid}, user);
+					console.log(`added id to userr`);
+				} catch(e) {
+					Logger.shared.log(`Error while saving bankaccountId: ${e}`);
+				}
+
 				}
 				).catch(function (err) {
 				console.log(err.message)
