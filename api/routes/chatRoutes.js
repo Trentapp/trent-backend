@@ -51,7 +51,6 @@ chatRouter.post("/sendMessage", async (req, res) => {
 		} else {
 			// not perfectly tested yet, I hope there is no problem if req.body.recipient is undefined
 			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
-			console.log(existingChat)
 			if (existingChat) {
 				await Chat.updateOne({_id: existingChat._id}, { $push: { messages: message } });
 
@@ -173,7 +172,6 @@ chatRouter.post("/getNewMessages", async (req, res) => {
 				}
 			}
 		}
-		console.log(newMsgChats)
 		Logger.shared.log(`Sent chats of users successfully`);
 		res.status(200).json(newMsgChats);
 	} catch (e) {
@@ -184,6 +182,8 @@ chatRouter.post("/getNewMessages", async (req, res) => {
 
 
 
+
+// ugly and not needed anymore
 // Not secure yet. I will either make it secure or find another way to solve it so I don't need that function soon
 //attention: if that method is called and the corresponding chat does not exist yet, the chat is created
 chatRouter.post("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", async (req,res) => {
@@ -196,7 +196,6 @@ chatRouter.post("/getByLenderBorrowerProduct/:lenderId/:borrowerId/:productId", 
 		} else {
 			await chat.populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name']}, {path: 'lender', model: "User", select: ['name']}, {path:'messages.sender', model:'User', select: ['name']}]);
 		}
-		console.log("USER: ", user, chat);
 		/*if (!user || (JSON.stringify(chat.borrower._id) != JSON.stringify(user._id) && JSON.stringify(chat.lender._id) != JSON.stringify(user._id))){
 			throw "No access to chat!";
 		}*/ // the check does not work yet, but will be fixed automatically when the references are saved as ObjectIds

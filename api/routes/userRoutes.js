@@ -150,7 +150,6 @@ const convertPicture = async (file) => new Promise(resolve => {
       .toFile(file.path + "_thumb")
       .then(function(newFileInfo){
           let thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype};
-          console.log("image ready");
           resolve(thumbnail);
       })
   })
