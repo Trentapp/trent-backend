@@ -32,7 +32,8 @@ const UserSchema = mongoose.Schema({ //to be extended
     picture: ImageSchema,
     apnTokens: [String],
     mangopayId: String,
-    walletId: String
+    walletId: String,
+    bankaccountId: String
 });
 
 UserSchema.index({name: "text"});

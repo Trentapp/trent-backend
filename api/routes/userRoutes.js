@@ -82,7 +82,7 @@ userRouter.put("/update", async (req, res) => {
         updatedUser["mail"] = user.mail;
         updatedUser["picture"] = user.picture;
 
-        await User.replaceOne({ uid: req.body.user.uid }, req.body.user);// maybe change to updateOne later
+        await User.replaceOne({ uid: req.body.user.uid }, updatedUser);// maybe change to updateOne later
         Logger.shared.log(`Successfully updated user profile with id ${user._id}`);
         res.status(200).json({ status: "success" });
     } catch (e) {

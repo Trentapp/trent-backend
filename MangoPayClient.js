@@ -18,30 +18,33 @@ class MangoPayClient {
 		});
 	}
 
-	createNewUser (uid, firstName, lastName, birthday, nationality, countryOfResidence, mail) {
-		this.api.Users.create({
-	    PersonType: "NATURAL",
-	    FirstName: firstName,
-	    LastName: lastName,
-	    Birthday: birthday,
-	    Nationality: nationality,
-	    CountryOfResidence: "DE",
-	    Email: mail,
-		}).then(async function (response) {
-			// TODO: Check for errors
-			console.log(response.Id);
-    	console.log("Natural user created", response);
-			const user = await User.findOne({ uid : uid });
-			console.log(`uid: ${uid}`);
-			user.mangopayId = response.Id;
-			// console.log(`user mangopay id: ${user.mangopayId}`);
-			await User.replaceOne({ uid : uid }, user);
-			// MangoPayClient.shared.createWallet(user._id, response.Id);
+	async createNewUser (uid, firstName, lastName, birthday, nationality, countryOfResidence, mail) {
+		return new Promise(async resolve=> {
+			this.api.Users.create({
+		    PersonType: "NATURAL",
+		    FirstName: firstName,
+		    LastName: lastName,
+		    Birthday: birthday,
+		    Nationality: nationality,
+		    CountryOfResidence: "DE",
+		    Email: mail,
+			}).then(async function (response) {
+				// TODO: Check for errors
+				console.log(response.Id);
+	    	console.log("Natural user created", response);
+				const user = await User.findOne({ uid : uid });
+				console.log(`uid: ${uid}`);
+				user.mangopayId = response.Id;
+				// console.log(`user mangopay id: ${user.mangopayId}`);
+				await User.replaceOne({ uid : uid }, user);
+				resolve();
+				// MangoPayClient.shared.createWallet(user._id, response.Id);
+			});
 		});
 	}
 
 	createWallet(_id, mangopayId) {
-		console.log(`creating wallet; _id:${_id}; mangopay: ${mangopay}`);
+		console.log(`creating wallet; _id:${_id}; mangopayId: ${mangopay}`);
 
 		this.api.Wallets.create({
 			Owners: [ mangopayId ],
@@ -51,6 +54,8 @@ class MangoPayClient {
 			// TODO: Check for errors
 			console.log("Adding walletId to user in db");
 			await User.findByIdAndUpdate(_id, {walletId: response.Id});
+		}).catch(function (err) {
+		console.log(err.message);
 		});
 	}
 
@@ -196,7 +201,6 @@ class MangoPayClient {
 	async addBankaccount(uid, iban) {
 		try {
 			const user = await User.findOne({uid:uid});
-
 				this.api.Users.createBankAccount(
 				user.mangopayId,
 				{
@@ -212,8 +216,18 @@ class MangoPayClient {
 				},
 				IBAN: iban,
 				},
-				function (data) {
-				console.log(data)
+				async function (response) {
+				console.log(response);
+				try {
+					console.log(`bankaccountId: ${response.Id}`);
+					user.bankaccountId = response.Id;
+					console.log(`user.bankaccountId: ${user.bankaccountId}`);
+					await User.replaceOne({uid:uid}, user);
+					console.log(`added id to userr`);
+				} catch(e) {
+					Logger.shared.log(`Error while saving bankaccountId: ${e}`);
+				}
+
 				}
 				).catch(function (err) {
 				console.log(err.message)

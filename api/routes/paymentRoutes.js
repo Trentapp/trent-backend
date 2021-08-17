@@ -17,10 +17,12 @@ paymentRouter.post("/createMangopayUser", async (req, res) => {
         if(!req.body.uid || !req.body.birthday || !req.body.nationality || !req.body.countryOfResidence) {
           throw "Missing parameters";
         }
-        const user = await User.findOne({ uid: req.body.uid });
+        var user = await User.findOne({ uid: req.body.uid });
         console.log(`user with uid ${req.body.uid}`);
         if (!user.mangopayId && !user.walletId) {
           await MangoPayClient.shared.createNewUser(req.body.uid, user.firstName, user.lastName, req.body.birthday, req.body.nationality, req.body.countryOfResidence, user.mail);
+          user = await User.findOne({ uid: req.body.uid });
+          await MangoPayClient.shared.createWallet(user._id, user.mangopayId);
         }
         res.status(200).json({ status: "success" });
     } catch (e) {
