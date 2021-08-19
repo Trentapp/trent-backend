@@ -24,6 +24,8 @@ const productsRouter = express.Router();
 //// product stuff // Maybe we should rename everything to product instead of product. But we should take care of the database collection and it actually is not that important.
 
 // the default prefix of every route in that file is /api/products
+
+// I think we may want to improve the search significantly and thereby doing the location filter by ourselves, as a weighted parameter with other factors
 // getting products
 productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&dayPriceMax=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
