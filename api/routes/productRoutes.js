@@ -30,7 +30,7 @@ const productsRouter = express.Router();
 productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&dayPriceMax=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
     Logger.shared.log(`Querying for /products/ with ${req.params}`);
-    const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 30;
+    const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 14;
     const page = req.query.page ? parseInt(req.query.page, 10) : 0;
 
     let filters = {};//actually we don't need filters here yet, so we can delete it, but later we may want to outsource the data access stuff into another file, so I let it in for now
