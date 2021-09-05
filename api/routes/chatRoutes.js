@@ -73,17 +73,11 @@ chatRouter.post("/sendMessage", async (req, res) => {
 			} else {
 				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'User', select:['name', 'apnTokens']}]);
 				if (product.user._id == userId && !req.body.recipient) { throw "missing parameters"; }
-				let recipient;
-				if (req.body.recipient){
-					recipient = await User.findById(req.body.recipient);
-				}
+
 				const chat = {
 					"lender": product.user._id,
 					"borrower": (product.user._id == userId) ? req.body.recipient : userId,
 					"product": req.body.productId,
-					"lenderName": product.user.name,
-					"borrowerName": (product.user._id == userId) ? recipient.name : user.name,
-					"productName": product.name,
 					"messages": [message]
 				}
 				const newChat = await Chat.create(chat);
