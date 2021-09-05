@@ -20,7 +20,10 @@ reviewRouter.post("/create", async (req,res) => { //maybe change that so the pos
             Logger.shared.log(`Authenticating user with review failed: ${req.body.review}`, 1);
             throw "user identification incorrect";
         } else {
-            const newReview = await Review.create(req.body.review);//this is dangerous! An update should only occur if everything works (otherwise it can throw an error and still partially update). Fix that later.
+            let review = req.body.review;
+            const poster = await User.findById(review.poster);
+            review.posterName = poster.name;
+            const newReview = await Review.create(review);//this is dangerous! An update should only occur if everything works (otherwise it can throw an error and still partially update). Fix that later.
             Logger.shared.log(`Successfully created review with id ${newReview._id}`);
             const owner = await User.findById(req.body.review.ratedUser);
             const newUserRating = (owner.rating * owner.numberOfRatings + req.body.review.stars)/(owner.numberOfRatings + 1);// I hope we don't get rounding errors

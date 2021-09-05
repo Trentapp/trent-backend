@@ -36,6 +36,9 @@ const ChatSchema = mongoose.Schema({
 		ref: 'Product',
 		required: true
 	},
+	borrowerName: String,
+	lenderName: String,
+	productName: String,
 	messages: [MessageSchema]
 })
 

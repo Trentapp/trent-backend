@@ -16,6 +16,7 @@ const ReviewSchema = mongoose.Schema({ //to be extended
         ref: 'User',
         required: true
     },//_id of user who was rated
+    posterName: String,
     stars: {
         type: Number,
         required: true,

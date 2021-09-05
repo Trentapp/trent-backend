@@ -16,6 +16,9 @@ const TransactionSchema = mongoose.Schema({ //to be extended
       ref: 'Product',
       required: true
     },
+	borrowerName: String,
+	lenderName: String,
+	productName: String,
 	startDate: {
 		type: Date,
 		required: true

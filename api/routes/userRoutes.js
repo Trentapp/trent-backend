@@ -91,8 +91,8 @@ userRouter.put("/update", async (req, res) => {
     }
 });
 
-userRouter.delete("/delete", async (req, res) => {
-  Logger.shared.log(`Deleting public user profile with id ${req.body?.user?._id}`);
+userRouter.post("/delete", async (req, res) => {
+  Logger.shared.log(`Deleting public user profile`);
     try {
         const user = await User.findOne({ uid: req.body.uid });
         const userId = user._id;
