@@ -47,6 +47,10 @@ const ProductSchema = mongoose.Schema({ //to be extended
         default: function() {
             return !(this.prices.perHour || this.prices.perDay);
         }
+    },
+    deleted: {
+        type: Boolean,
+        default: false,
     }
 });
 

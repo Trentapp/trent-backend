@@ -91,17 +91,18 @@ userRouter.put("/update", async (req, res) => {
     }
 });
 
-userRouter.post("/delete", async (req, res) => {
+userRouter.post("/delete", async (req, res) => { // does not really delete user, just products and sets deleted parameter
   Logger.shared.log(`Deleting public user profile`);
     try {
         const user = await User.findOne({ uid: req.body.uid });
         const userId = user._id;
-        await Product.deleteMany({ userId: userId });//deletes all products of that user
-        await User.deleteOne({ uid: req.body.uid });
+        await Product.deleteMany({ user: userId });//deletes all products of that user
+        // await User.deleteOne({ uid: req.body.uid });
+        await User.updateOne({_id: userId}, {deleted: true});
         res.status(200).json({ message: "success" });
-        Logger.shared.log(`Successfully deleted user profile with id ${req.body?.user?._id}`);
+        Logger.shared.log(`Successfully deleted user profile with id ${userId}`);
     } catch (e) {
-        Logger.shared.log(`Delting user profile with id ${req.body?.user?._id} failed: ${e}`);
+        Logger.shared.log(`Delting user failed: ${e}`);
         res.status(500).json({ message: e });
     }
 });
