@@ -9,11 +9,9 @@ const UserSchema = mongoose.Schema({ //to be extended
     },
     firstName: {
       type: String,
-      required: true
     },
     lastName: {
       type: String,
-      required: true
     },
     name: {
       type: String,

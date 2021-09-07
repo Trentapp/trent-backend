@@ -32,8 +32,12 @@ userRouter.post("/create", async (req, res) => {
 userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user', 'desc', 'location'], populate: {path: 'user', model: 'User', select:['_id']}}]).orFail();
-        Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
+        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user', 'desc', 'location'], populate: {path: 'user', model: 'User', select:['_id']}}]);
+        if (user) {
+          Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
+        } else {
+          Logger.shared.log(`Could not find user with that uid`);
+        }
         res.status(200).json(user);
     } catch (e) {
         Logger.shared.log(`Failed getting private user profile ${e}`, 1);
