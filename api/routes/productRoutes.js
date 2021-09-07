@@ -202,6 +202,7 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
             product.picturesFitted = oldProduct.picturesFitted;
             product.thumbnail = oldProduct.thumbnail;
         }
+        product.free = !(product.prices.perHour || product.prices.perDay)
         product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
         await Product.replaceOne({ _id: req.params.productId }, product);
         Logger.shared.log(`Successfully updated product with id ${req.params.productId}`);
