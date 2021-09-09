@@ -90,33 +90,6 @@ transactionRouter.post("/findByUser", async (req, res) => {
 	}
 })
 
-//find by lender and find by borrower now only return current transactions (not cancelled and not enddate < now)
-transactionRouter.post("/findByLender", async (req,res) => {
-	Logger.shared.log(`Getting transaction for lender`);
-	try {
-		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$and: [{lender: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
-		Logger.shared.log(`Successfully got transaction for lender with id: ${user._id}`);
-		res.status(200).json(transactions);
-	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for lender ${e}`, 1);
-		res.status(500).json({ message: e });
-	}
-});
-
-transactionRouter.post("/findByBorrower", async (req,res) => {
-	try {
-		Logger.shared.log(`Getting transaction for borrower`);
-		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$and: [{borrower: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
-		Logger.shared.log(`Successfully got transaction for borrower with id: ${user._id}`);
-		res.status(200).json(transactions);
-	} catch (e) {
-		Logger.shared.log(`Failed getting transaction for borrower`, 1);
-		res.status(500).json({ message: e });
-	}
-});
-
 transactionRouter.post("/getUpcoming", async (req,res) => {
 	try {
 		Logger.shared.log(`Getting upcoming transactions of user`);
@@ -139,20 +112,6 @@ transactionRouter.post("/getNewRequests", async (req,res) => {
 		res.status(200).json(transactions);
 	} catch (e) {
 		Logger.shared.log(`Failed getting transaction for user ${e}`, 1);
-		res.status(500).json({ message: e });
-	}
-});
-
-//findPastTransactions returns all transactions of a user that were cancelled ore where enddate < now
-transactionRouter.post("/findPastTransactions", async (req,res) => {
-	Logger.shared.log(`Getting past transaction for user`);
-	try {
-		const user = await User.findOne({uid: req.body.uid});
-		const transactions = await Transaction.find({$and: [{$or: [{lender: user._id}, {borrower: user._id}]}, {$or: [{endDate: {$lt: new Date()}}, {status: 1}]}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
-		Logger.shared.log(`Successfully got past transaction for user with id: ${user._id}`);
-		res.status(200).json(transactions);
-	} catch (e) {
-		Logger.shared.log(`Failed getting past transaction for user`, 1);
 		res.status(500).json({ message: e });
 	}
 });
@@ -190,3 +149,52 @@ transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put 
 
 
 export default transactionRouter;
+
+
+
+// deprecated, I think
+
+
+//find by lender and find by borrower now only return current transactions (not cancelled and not enddate < now)
+transactionRouter.post("/findByLender", async (req,res) => {
+	Logger.shared.log(`Getting transaction for lender`);
+	try {
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{lender: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		Logger.shared.log(`Successfully got transaction for lender with id: ${user._id}`);
+		res.status(200).json(transactions);
+	} catch (e) {
+		Logger.shared.log(`Failed getting transaction for lender ${e}`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
+transactionRouter.post("/findByBorrower", async (req,res) => {
+	try {
+		Logger.shared.log(`Getting transaction for borrower`);
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{borrower: user._id}, {endDate: {$gte: new Date()}}, {status: {$ne: 1}}]}).populate([{path: 'product', select: ['name', 'address', 'thumbnail']}, {path: 'borrower', select: ['name', 'picture', 'numberOfRatings', 'rating', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		Logger.shared.log(`Successfully got transaction for borrower with id: ${user._id}`);
+		res.status(200).json(transactions);
+	} catch (e) {
+		Logger.shared.log(`Failed getting transaction for borrower`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
+//findPastTransactions returns all transactions of a user that were cancelled ore where enddate < now
+transactionRouter.post("/findPastTransactions", async (req,res) => {
+	Logger.shared.log(`Getting past transaction for user`);
+	try {
+		const user = await User.findOne({uid: req.body.uid});
+		const transactions = await Transaction.find({$and: [{$or: [{lender: user._id}, {borrower: user._id}]}, {$or: [{endDate: {$lt: new Date()}}, {status: 1}]}]}).populate([{path: 'product', select: ['name']}, {path: 'borrower', select: ['name', "picture"]}, {path: 'lender', select: ['name', "picture"]}]);
+		Logger.shared.log(`Successfully got past transaction for user with id: ${user._id}`);
+		res.status(200).json(transactions);
+	} catch (e) {
+		Logger.shared.log(`Failed getting past transaction for user`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
+
+

@@ -33,7 +33,11 @@ const UserSchema = mongoose.Schema({ //to be extended
     apnTokens: [String],
     mangopayId: String,
     walletId: String,
-    bankaccountId: String
+    bankaccountId: String,
+    deleted: {
+        type: Boolean,
+        default: false,
+    }
 });
 
 UserSchema.index({name: "text"});
