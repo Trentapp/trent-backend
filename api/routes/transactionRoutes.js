@@ -6,6 +6,7 @@ import Transaction from "../models/Transaction.js"
 import Logger from "../../Logger.js"
 import PushNotificationHandler from "../../PushNotificationHandler.js"
 import MangoPayClient from "../../MangoPayClient.js"
+import { transporter, callbackSendMail } from "../mail.js"
 
 const transactionRouter = express.Router();
 
@@ -17,7 +18,7 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		const user = await User.findOne({ uid: req.body.uid });
 		const userId = user._id;
 		if (!userId) { Logger.shared.log(`Could not authenticate user`, 1); throw "User uid not found" }
-		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'User', select:['name', 'apnTokens']}]);
+		const product = await Product.findById(req.body.productId).populate([{path: "user", model:'User', select:['name', 'mail', 'apnTokens']}]);
 		const lenderId = product.user._id;
 		if (!lenderId) { Logger.shared.log(`Lender not found`, 1); throw "Lender id not found"; }
 		if (lenderId == userId) { Logger.shared.log(`Lender cannot be same user as borrower`, 1); throw "Invalid operation: Lender can not be the same user as borrower" }
@@ -52,6 +53,14 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		await User.updateOne({_id: lenderId}, { $push: { transactionsLender: newTransaction._id } });
 		Logger.shared.log(`Successfully sent request with id: ${newTransaction._id}`);
 		PushNotificationHandler.shared.sendPushNotification("New borrowing request", `${user.name} has requested to borrow ${product.name}`, product.user.apnTokens);
+		// send Email notification
+		const mailoptions = {
+			from: "info@trentapp.com",
+			to: product.user.mail,
+			subject: `${user.name} wants to borrow your ${product.name}`,
+			text: `View your requests: trentapp.com/transactions \n\n${user.name} wants to borrow your ${product.name} from ${new Date(req.body.startDate).toLocaleString()} to ${new Date(req.body.endDate).toLocaleString("de")} for ${totalPrice/100}€.`
+		};
+		transporter.sendMail(mailoptions, callbackSendMail);
 		res.status(200).json({ status: "success" });
 	} catch (e) {
 		Logger.shared.log(`Sending request failed: ${e}`, 1);
