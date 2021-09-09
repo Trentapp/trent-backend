@@ -132,5 +132,18 @@ paymentRouter.post("/registerLender", upload.any(), upload.single("body"), async
 
 });
 
+paymentRouter.post("/getCardsOfUser", async (req,res) => {
+	Logger.shared.log(`Getting cards of user`);
+	try {
+		const user = await User.findOne({uid: req.body.uid});
+		const cards = await MangoPayClient.shared.getCardsOfUser(user.mangopayId);
+		Logger.shared.log(`Got cards successfully`);
+		res.status(200).json(cards);
+	} catch (e) {
+		Logger.shared.log(`Getting cards failed: ${e}`, 1);
+		res.status(500).json({ message: e });
+	}
+});
+
 
 export default paymentRouter;
