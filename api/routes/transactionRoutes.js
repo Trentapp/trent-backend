@@ -170,7 +170,7 @@ transactionRouter.patch("/setTransactionStatus/:id", async (req,res) => { //put 
 		else if (JSON.stringify(user._id) == JSON.stringify(transaction.lender._id)){
 			if (req.body.status == 2 && transaction.status == 0){
 				await Transaction.updateOne({_id: req.params.id}, {status: 2});
-				PushNotificationHandler.shared.sendPushNotification("Booking approved", `${user.name} has approved the booking of ${transaction.product.name}`, transaction.borrower.apnTokens);
+				PushNotificationHandler.shared.sendPushNotification("Payment required", `${user.name} has approved the booking of ${transaction.product.name}. Please complete the booking by continuing with your payment.`, transaction.borrower.apnTokens);
 			} else if (req.body.status == 1){
 				await Transaction.updateOne({_id: req.params.id}, {status: 1});
 				PushNotificationHandler.shared.sendPushNotification("Booking cancelled", `${user.name} has cancelled the booking of ${transaction.product.name}`, transaction.borrower.apnTokens);

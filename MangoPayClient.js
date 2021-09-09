@@ -91,6 +91,18 @@ class MangoPayClient {
 	})
 	}
 
+	async getCardsOfUser(mangopayId) {
+		console.log(mangopayId);
+		return new Promise(async resolve =>{
+		this.api.Users.getCards(mangopayId).then(async function (response) {
+			// TODO: Check for errors
+			console.log(`response: ${response}`);
+			resolve(response);
+			// await User.findByIdAndUpdate(_id, {walletId: response.Id});
+		});
+	})
+	}
+
 	async createPayIn(uid, transactionId, cardId, ip, userAgent) {
 		return new Promise(async resolve => {
 			const user = await User.findOne({uid:uid});
