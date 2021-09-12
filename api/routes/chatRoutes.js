@@ -5,6 +5,7 @@ import Chat from "../models/Chat.js"
 
 import Logger from "../../Logger.js"
 import PushNotificationHandler from "../../PushNotificationHandler.js"
+import { transporter, callbackSendMail } from "../mail.js"
 
 const chatRouter = express.Router();
 
@@ -27,53 +28,44 @@ chatRouter.post("/sendMessage", async (req, res) => {
 		};
 
 		let chatId; //for redirecting to the right url
+		let recipientEmail;
+		let senderName = user.name;
+		let recipientTokens = [];
+		let productName;
 		if (req.body.chatId) {// I would put that into a put("/updateChat/:id") route, but not important
-			const chat = await Chat.findById(req.body.chatId).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
+			const chat = await Chat.findById(req.body.chatId).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'mail', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'mail', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			if (JSON.stringify(chat.borrower._id) != JSON.stringify(userId) && JSON.stringify(chat.lender._id) != JSON.stringify(userId)) { throw "User not authorized"; }
 			await Chat.updateOne({_id: req.body.chatId}, { $push: { messages: message } });
 
-			var senderName = "";
-			var recipientTokens = [];
-
+			productName = chat.product.name;
 			if (userId == chat.lender._id) {
-				senderName = chat.lender.name;
 				recipientTokens = chat.borrower.apnTokens;
+				recipientEmail = chat.borrower.mail;
 			} else {
-				senderName = chat.borrower.name;
 				recipientTokens = chat.lender.apnTokens;
-			}
-
-			if (recipientTokens?.length > 0){
-				PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
+				recipientEmail = chat.lender.mail;
 			}
 
 			chatId = req.body.chatId;
 		} else {
 			// not perfectly tested yet, I hope there is no problem if req.body.recipient is undefined
-			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
+			const existingChat = await Chat.findOne({ $and: [{ 'product': req.body.productId }, { $or: [{ 'borrower': userId }, { 'borrower': req.body.recipient }] }] }).populate([{path: 'product', model: "Product", select: ['name']}, {path: 'borrower', model: "User", select: ['name', 'mail', 'apnTokens']}, {path: 'lender', model: "User", select: ['name', 'mail', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
 			if (existingChat) {
 				await Chat.updateOne({_id: existingChat._id}, { $push: { messages: message } });
 
-				var senderName = "";
-				var recipientTokens = [];
-
+				productName = existingChat.product.name;
 				if (userId == existingChat.lender._id) {
-					senderName = existingChat.lender.name;
 					recipientTokens = existingChat.borrower.apnTokens;
+					recipientEmail = existingChat.borrower.mail;
 				} else {
-					senderName = existingChat.borrower.name;
 					recipientTokens = existingChat.lender.apnTokens;
+					recipientEmail = existingChat.borrower.mail;
 				}
-
-				if (recipientTokens?.length > 0){
-					PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
-				}
-
 				chatId = existingChat._id;
 			} else {
-				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'User', select:['name', 'apnTokens']}]);
+				const product = await Product.findById(req.body.productId).populate([{path:'user', model:'User', select:['name', 'mail', 'apnTokens']}]);
 				if (product.user._id == userId && !req.body.recipient) { throw "missing parameters"; }
-
+				productName = product.name;
 				const chat = {
 					"lender": product.user._id,
 					"borrower": (product.user._id == userId) ? req.body.recipient : userId,
@@ -82,25 +74,28 @@ chatRouter.post("/sendMessage", async (req, res) => {
 				}
 				const newChat = await Chat.create(chat);
 
-				var senderName = "";
-				var recipientTokens = [];
-
-				if (userId == newChat.lender._id) {
-					senderName = newChat.lender.name;
-					recipientTokens = newChat.borrower.apnTokens;
+				if (userId == product.user._id) {
+					const recipient = User.findById(req.body.recipient);
+					recipientTokens = recipient.apnTokens;
+					recipientEmail = recipient.mail;
 				} else {
-					senderName = newChat.borrower.name;
-					recipientTokens = newChat.lender.apnTokens;
+					recipientTokens = product.user.apnTokens;
+					recipientEmail = product.user.mail;
 				}
-
-				if (recipientTokens?.length > 0){
-					PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
-				}
-
 				chatId = newChat._id;
 			}
 		}
-
+		if (recipientTokens?.length > 0){ // send push notification
+			PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
+		}
+		// Send email notification
+		const mailoptions = {
+			from: "info@trentapp.com",
+			to: recipientEmail,
+			subject: `New message from ${senderName} because of product ${productName}`,
+			text: `View chat: trentapp.com/chats/${chatId} \n\n${senderName} writes: ${req.body.content}`
+		};
+		transporter.sendMail(mailoptions, callbackSendMail);
 		Logger.shared.log(`Successfully sent message for chatId: ${req.body.chatId} concering product: ${req.body.productId}`);
 		res.status(200).json({ status: "success", chatId: chatId });
 	} catch (e) {
