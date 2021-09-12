@@ -106,13 +106,13 @@ class MangoPayClient {
 	async createPayIn(uid, transactionId, cardId, ip, userAgent) {
 		return new Promise(async resolve => {
 			const user = await User.findOne({uid:uid});
+			const transaction = await Transaction.findById(transactionId);
 			console.log(`transaction: ${transactionId}`);
-			const transaction = await Transaction.findById(transactionId).populate([{path:'lender', model:'User', select:['walletId']}]);
 			this.api.PayIns.create({
 				PaymentType: "CARD",
 				ExecutionType: "DIRECT",
 				AuthorId : user.mangopayId,
-				CreditedWalletId : transaction.lender.walletId,
+				CreditedWalletId : user.walletId,
 				DebitedFunds : {
 					Currency:"EUR",
 					Amount: transaction.totalPrice,
@@ -249,29 +249,34 @@ class MangoPayClient {
 		}
 	}
 
-	// async addNewTransaction (uid, transactionId) {
-	// 	let user = await User.findOne({uid:uid});
-	// 	let mangopayId = user.mangopayId;
-	//
-	// 	const transaction = await Transaction.findById(transactionId);
-	//
-	// 	this.api.Transfer.create({
-	// 		AuthorId: mangopayId,
-	// 		DebitedFunds: {
-	// 			Currency: "EUR",
-	// 			Amount: 12
-	// 		},
-	// 		Fees: {
-	// 			Currency: "EUR",
-	// 			Amount: 12
-	// 		},
-	// 		DebitedWalletId: user.walletId,
-	// 		CreditedWalletId: transaction.
-	// 	}).then(res => {
-	// 			// TODO: Check for errors
-	// 			transaction.isPaid = true;
-	// 		})
-	// }
+	async payTransaction (uid, transactionId) {
+		return new Promise(async resolve => {
+			let user = await User.findOne({uid:uid});
+			let mangopayId = user.mangopayId;
+
+			const transaction = await Transaction.findById(transactionId).populate([{path:'lender', model:'User', select:['walletId']}]);;
+
+			this.api.Transfers.create({
+				AuthorId: mangopayId,
+				DebitedFunds: {
+					Currency: "EUR",
+					Amount: transaction.totalPrice
+				},
+				Fees: {
+					Currency: "EUR",
+					Amount: transaction.totalPrice - transaction.lenderEarnings
+				},
+				DebitedWalletId: user.walletId,
+				CreditedWalletId: transaction.lender.walletId
+			}).then(res => {
+					// TODO: Check for errors
+					if(res.ResultMessage == "Success"){
+						transaction.isPaid = true;
+					}
+					resolve(res);
+				})
+		})
+	}
 
 }
 
