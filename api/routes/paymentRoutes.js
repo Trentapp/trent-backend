@@ -63,7 +63,7 @@ paymentRouter.post("/updateCardRegistration", async (req,res) => {
 	}
 });
 
-paymentRouter.post("/payIn", async (req,res) => {
+paymentRouter.post("/pay", async (req,res) => {
 	Logger.shared.log(`Paying in`);
 	try {
 		if(!req.body.uid || !req.body.transactionId || !req.body.cardId){
@@ -71,6 +71,7 @@ paymentRouter.post("/payIn", async (req,res) => {
 		}
 		const response = await MangoPayClient.shared.createPayIn(req.body.uid, req.body.transactionId, req.body.cardId, "2003:C8:CF2F:4218:D017:5412:6570:7E26", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15");
 		Logger.shared.log(`Successfully payed in`);
+    await MangoPayClient.shared.payTransaction (req.body.uid, req.body.transactionId);
 		res.status(200).json(response);
 	} catch (e) {
 		Logger.shared.log(`Failed to pay in: ${e}`, 1);
