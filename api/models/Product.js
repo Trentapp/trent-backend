@@ -23,10 +23,7 @@ const ProductSchema = mongoose.Schema({ //to be extended
     },
     prices:{
         perHour: Number,//saying everything is in € for the beginning
-        perDay: {
-            type: Number,
-            required: true,
-        },//add sth like currency later
+        perDay: Number,//add sth like currency later
     },
     location: {
         type: { type: String },
@@ -44,7 +41,13 @@ const ProductSchema = mongoose.Schema({ //to be extended
     thumbnail: ImageSchema,
     pictures: [ImageSchema],
     picturesFitted: [ImageSchema],
-    thumbnails: [ImageSchema]
+    thumbnails: [ImageSchema],
+    free: {
+        type: Boolean,
+        default: function() {
+            return !(this.prices.perHour || this.prices.perDay);
+        }
+    }
 });
 
 // ProductSchema.index({name: "text", location: "2dsphere"});

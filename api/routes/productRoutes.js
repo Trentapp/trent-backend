@@ -24,11 +24,13 @@ const productsRouter = express.Router();
 //// product stuff // Maybe we should rename everything to product instead of product. But we should take care of the database collection and it actually is not that important.
 
 // the default prefix of every route in that file is /api/products
+
+// I think we may want to improve the search significantly and thereby doing the location filter by ourselves, as a weighted parameter with other factors
 // getting products
 productsRouter.get("/", async (req, res) => { //in the frontend, it should be called with such a query: .../products?name=Name&dayPriceMax=23
     //to access the right page, you can add to the query: .../products?page=2&productsPerPage=10 // maybe change pagination to "load more when you scroll down" later, but I'm not sure if we need to change it in the backend
     Logger.shared.log(`Querying for /products/ with ${req.params}`);
-    const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 20;
+    const productsPerPage = req.query.productsPerPage ? parseInt(req.query.productsPerPage, 10) : 14;
     const page = req.query.page ? parseInt(req.query.page, 10) : 0;
 
     let filters = {};//actually we don't need filters here yet, so we can delete it, but later we may want to outsource the data access stuff into another file, so I let it in for now
@@ -39,7 +41,6 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
     }
     if (req.query.lat && req.query.lng) {
         let maxDistance = 5/6371;
-        let maxDistMeters = 30000;
         if(req.query.maxDistance){
           maxDistance = req.query.maxDistance / 6371;
         }
@@ -57,7 +58,6 @@ productsRouter.get("/", async (req, res) => { //in the frontend, it should be ca
         queryConds.push({ 'user._id': req.query.inventoryUserId });
     }
     try {
-        //console.log(queryConds);
         const products = await Product.find({ $and: queryConds }).populate([{path:'user', model:'User', select:['name']}]).skip(productsPerPage*page).limit(productsPerPage);//(other order may be slightly more efficient (populate at the end))
         res.status(200).json(products.map(product => ({_id: product._id, name: product.name, desc: product.desc, prices: product.prices, location: product.location, address: product.address, user: product.user, thumbnail: product.thumbnail})));
     } catch (e) {
@@ -74,8 +74,7 @@ const getCoordinates = async (product) => {
         product['location.type'] = "Point";
         return product;
     } catch (e) {
-        Logger.shared.log(`Getting coordinated for products failed: ${e}`)
-        console.log(`Failed to find coordinates of address: ${e}`, 1);
+        Logger.shared.log(`Getting coordinated for products failed: ${e}`, 1)
     }
 };
 
@@ -122,7 +121,6 @@ productsRouter.post("/create", upload.any(), upload.single("body"), async (req,r
         Logger.shared.log(`Successfully created product with id ${newProduct._id}`);
         res.status(200).json({status: "success", productId: newProduct._id});
     } catch(e) {
-        console.log("Error in post product: ", e);
         Logger.shared.log(`Could not create product: ${e}`, 1);
         res.status(500).json({message:e});
     }
@@ -198,15 +196,13 @@ productsRouter.put("/product/update/:productId", upload.any(), upload.single("pr
         product.thumbnails = thumbnails;
         product.picturesFitted = fittedImages;
         product.thumbnail = thumbnail;
-        console.log(images)
-        console.log(oldProduct)
         if(images.length == 0){
             product.pictures = oldProduct.pictures;
             product.thumbnails = oldProduct.thumbnails;
             product.picturesFitted = oldProduct.picturesFitted;
             product.thumbnail = oldProduct.thumbnail;
-            console.log(product.picturesFitted);
         }
+        product.free = !(product.prices.perHour || product.prices.perDay)
         product = await getCoordinates(product);//take care that it breaks out of the try and goes into catch when getCoordinates failed
         await Product.replaceOne({ _id: req.params.productId }, product);
         Logger.shared.log(`Successfully updated product with id ${req.params.productId}`);
@@ -227,7 +223,6 @@ const convertPicture = async (file) => new Promise(resolve => {
       .toFile(file.path + "_thumb")
       .then(function(newFileInfo){
           let thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype};
-          console.log("image ready");
           resolve(thumbnail);
       })
   })
@@ -243,7 +238,6 @@ const convertPicture2 = async (file) => new Promise(resolve => {
         .toFile(file.path + "_fitted")
         .then(function(newFileInfo){
             let thumbnail = {data: fs.readFileSync(file.path + "_fitted"), contentType: file.mimetype};
-            console.log("image ready");
             resolve(thumbnail);
         })
     })

@@ -32,8 +32,12 @@ userRouter.post("/create", async (req, res) => {
 userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user', 'desc', 'location'], populate: {path: 'user', model: 'User', select:['_id']}}]).orFail();
-        Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
+        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user', 'desc', 'location'], populate: {path: 'user', model: 'User', select:['_id']}}]);
+        if (user) {
+          Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
+        } else {
+          Logger.shared.log(`Could not find user with that uid`);
+        }
         res.status(200).json(user);
     } catch (e) {
         Logger.shared.log(`Failed getting private user profile ${e}`, 1);
@@ -82,7 +86,11 @@ userRouter.put("/update", async (req, res) => {
         updatedUser["mail"] = user.mail;
         updatedUser["picture"] = user.picture;
 
-        await User.replaceOne({ uid: req.body.user.uid }, req.body.user);// maybe change to updateOne later
+        if (updatedUser.firstName && updatedUser.lastName) {
+          updatedUser["name"] = updatedUser.firstName + " " + updatedUser.lastName;
+        }
+
+        await User.replaceOne({ uid: req.body.user.uid }, updatedUser);// maybe change to updateOne later
         Logger.shared.log(`Successfully updated user profile with id ${user._id}`);
         res.status(200).json({ status: "success" });
     } catch (e) {
@@ -91,17 +99,18 @@ userRouter.put("/update", async (req, res) => {
     }
 });
 
-userRouter.delete("/delete", async (req, res) => {
-  Logger.shared.log(`Deleting public user profile with id ${req.body?.user?._id}`);
+userRouter.post("/delete", async (req, res) => { // does not really delete user, just products and sets deleted parameter
+  Logger.shared.log(`Deleting public user profile`);
     try {
         const user = await User.findOne({ uid: req.body.uid });
         const userId = user._id;
-        await Product.deleteMany({ userId: userId });//deletes all products of that user
-        await User.deleteOne({ uid: req.body.uid });
+        await Product.deleteMany({ user: userId });//deletes all products of that user
+        // await User.deleteOne({ uid: req.body.uid });
+        await User.updateOne({_id: userId}, {deleted: true});
         res.status(200).json({ message: "success" });
-        Logger.shared.log(`Successfully deleted user profile with id ${req.body?.user?._id}`);
+        Logger.shared.log(`Successfully deleted user profile with id ${userId}`);
     } catch (e) {
-        Logger.shared.log(`Delting user profile with id ${req.body?.user?._id} failed: ${e}`);
+        Logger.shared.log(`Delting user failed: ${e}`);
         res.status(500).json({ message: e });
     }
 });
@@ -150,7 +159,6 @@ const convertPicture = async (file) => new Promise(resolve => {
       .toFile(file.path + "_thumb")
       .then(function(newFileInfo){
           let thumbnail = {data: fs.readFileSync(file.path + "_thumb"), contentType: file.mimetype};
-          console.log("image ready");
           resolve(thumbnail);
       })
   })

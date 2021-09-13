@@ -9,11 +9,9 @@ const UserSchema = mongoose.Schema({ //to be extended
     },
     firstName: {
       type: String,
-      required: true
     },
     lastName: {
       type: String,
-      required: true
     },
     name: {
       type: String,
@@ -32,7 +30,12 @@ const UserSchema = mongoose.Schema({ //to be extended
     picture: ImageSchema,
     apnTokens: [String],
     mangopayId: String,
-    walletId: String
+    walletId: String,
+    bankaccountId: String,
+    deleted: {
+        type: Boolean,
+        default: false,
+    }
 });
 
 UserSchema.index({name: "text"});
