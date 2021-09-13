@@ -89,11 +89,17 @@ chatRouter.post("/sendMessage", async (req, res) => {
 			PushNotificationHandler.shared.sendPushNotification(senderName, req.body.content, recipientTokens);
 		}
 		// Send email notification
-		const mailoptions = {
+		// const mailoptions = { // English version
+		// 	from: "info@trentapp.com",
+		// 	to: recipientEmail,
+		// 	subject: `New message from ${senderName} because of product ${productName}`,
+		// 	text: `View chat: trentapp.com/chats/${chatId} \n\n${senderName} writes: ${req.body.content}`
+		// };
+		const mailoptions = { // German version
 			from: "info@trentapp.com",
 			to: recipientEmail,
-			subject: `New message from ${senderName} because of product ${productName}`,
-			text: `View chat: trentapp.com/chats/${chatId} \n\n${senderName} writes: ${req.body.content}`
+			subject: `Neue Nachricht von ${senderName} wegen dem folgenden Gegenstand: ${productName}`,
+			text: `Link zum Chat: trentapp.com/chats/${chatId} \n\n${senderName} schreibt: ${req.body.content}`
 		};
 		transporter.sendMail(mailoptions, callbackSendMail);
 		Logger.shared.log(`Successfully sent message for chatId: ${req.body.chatId} concering product: ${req.body.productId}`);

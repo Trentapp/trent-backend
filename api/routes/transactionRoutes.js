@@ -54,11 +54,17 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		Logger.shared.log(`Successfully sent request with id: ${newTransaction._id}`);
 		PushNotificationHandler.shared.sendPushNotification("New borrowing request", `${user.name} has requested to borrow ${product.name}`, product.user.apnTokens);
 		// send Email notification
-		const mailoptions = {
+		// const mailoptions = { // English version
+		// 	from: "info@trentapp.com",
+		// 	to: product.user.mail,
+		// 	subject: `${user.name} wants to borrow your ${product.name}`,
+		// 	text: `View your requests: trentapp.com/transactions \n\n${user.name} wants to borrow your ${product.name} from ${new Date(req.body.startDate).toLocaleString()} to ${new Date(req.body.endDate).toLocaleString("de")} for ${totalPrice/100}€.`
+		// };
+		const mailoptions = { // German version
 			from: "info@trentapp.com",
 			to: product.user.mail,
-			subject: `${user.name} wants to borrow your ${product.name}`,
-			text: `View your requests: trentapp.com/transactions \n\n${user.name} wants to borrow your ${product.name} from ${new Date(req.body.startDate).toLocaleString()} to ${new Date(req.body.endDate).toLocaleString("de")} for ${totalPrice/100}€.`
+			subject: `${user.name} will dein ${product.name} ausleihen`,
+			text: `Ausleihanfragen an dich: trentapp.com/transactions \n\n${user.name} will dein ${product.name} von ${new Date(req.body.startDate).toLocaleString()} bis ${new Date(req.body.endDate).toLocaleString("de")} für ${totalPrice/100}€ ausleihen.`
 		};
 		transporter.sendMail(mailoptions, callbackSendMail);
 		res.status(200).json({ status: "success" });
