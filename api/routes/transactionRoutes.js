@@ -34,6 +34,7 @@ transactionRouter.post("/createTransaction", async (req, res) => {
 		} else {
 			totalPrice = Math.ceil(diffMilliSeconds/(1000*60*60*24)) * product.prices.perDay;
 		}
+		totalPrice = Math.round(totalPrice*100)/100;
 
 		const transaction = {
 			"borrower": userId,
