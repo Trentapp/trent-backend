@@ -22,6 +22,10 @@ const UserSchema = mongoose.Schema({ //to be extended
     mail: String,//I would use email instead of mail
     //picture: String,
     address: AddressSchema,
+    location: {
+      type: { type: String },
+      coordinates: []
+    },
     inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Product"}], // are we using this currently?
     transactionsLender: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
     transactionsBorrower: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],

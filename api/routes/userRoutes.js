@@ -1,12 +1,20 @@
 import express from "express"
 import sharp from "sharp"
 import multer from "multer"
+import NodeGeocoder from "node-geocoder"
 import fs from "fs"
 import User from "../models/User.js"
 import Product from "../models/Product.js"
 
 import MangoPayClient from "../../MangoPayClient.js"
 import Logger from "../../Logger.js"
+
+console.log(process.env.GOOGLE_MAPS_API_KEY);
+const options = {
+  provider: "google",
+  apiKey: process.env.GOOGLE_MAPS_API_KEY,
+};
+const geocoder = NodeGeocoder(options);
 
 const upload = multer({dest: "../uploads/"});
 
@@ -27,6 +35,18 @@ userRouter.post("/create", async (req, res) => {
         res.status(500).json({ message: e });
     }
 });
+
+const getCoordinates = async (user) => {
+  //extract the geocoordinates from address and add it to user
+  try {
+      const responseLoc = await geocoder.geocode(`${user.address.streetWithNr}, ${user.address.zipcode} ${user.address.city}, ${user.address.country}`); //may not need to be that detailed
+      user['location.coordinates'] = [responseLoc[0].longitude, responseLoc[0].latitude];
+      user['location.type'] = "Point";
+      return user;
+  } catch (e) {
+      Logger.shared.log(`Getting coordinates for user failed: ${e}`, 1)
+  }
+};
 
 // get private profile
 userRouter.post("/user", async (req, res) => {
@@ -88,6 +108,9 @@ userRouter.put("/update", async (req, res) => {
 
         if (updatedUser.firstName && updatedUser.lastName) {
           updatedUser["name"] = updatedUser.firstName + " " + updatedUser.lastName;
+        }
+        if (updatedUser.address?.streetWithNr && updatedUser.address?.zipcode) {
+          updatedUser = await getCoordinates(updatedUser);
         }
 
         await User.replaceOne({ uid: req.body.user.uid }, updatedUser);// maybe change to updateOne later

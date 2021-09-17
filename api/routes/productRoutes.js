@@ -1,6 +1,6 @@
 import express from "express"
 import NodeGeocoder from "node-geocoder"
-import dotenv from "dotenv"
+// import dotenv from "dotenv"
 import sharp from "sharp"
 import multer from "multer"
 import fs from "fs"
@@ -12,7 +12,7 @@ import User from "../models/User.js"
 
 const upload = multer({dest: "../uploads/"});
 
-dotenv.config();
+// dotenv.config();
 const options = {
     provider: "google",
     apiKey: process.env.GOOGLE_MAPS_API_KEY,
