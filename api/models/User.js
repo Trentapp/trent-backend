@@ -26,9 +26,10 @@ const UserSchema = mongoose.Schema({ //to be extended
       type: { type: String },
       coordinates: []
     },
-    inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Product"}], // are we using this currently?
-    transactionsLender: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
-    transactionsBorrower: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
+    items: [{type: mongoose.Schema.Types.ObjectId, ref: "Items"}],
+    // inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Products"}],
+    // transactionsLender: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
+    // transactionsBorrower: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
     rating: Number,
     numberOfRatings: Number, //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
     picture: ImageSchema,

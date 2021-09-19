@@ -5,11 +5,11 @@ import NodeGeocoder from "node-geocoder"
 import fs from "fs"
 import User from "../models/User.js"
 import Product from "../models/Product.js"
+import Item from "../models/Item.js"
 
 import MangoPayClient from "../../MangoPayClient.js"
 import Logger from "../../Logger.js"
 
-console.log(process.env.GOOGLE_MAPS_API_KEY);
 const options = {
   provider: "google",
   apiKey: process.env.GOOGLE_MAPS_API_KEY,
@@ -52,7 +52,7 @@ const getCoordinates = async (user) => {
 userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'user', 'desc', 'location'], populate: {path: 'user', model: 'User', select:['_id']}}]);
+        const user = await User.findOne({ uid: req.body.uid });
         if (user) {
           Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
         } else {
@@ -64,6 +64,51 @@ userRouter.post("/user", async (req, res) => {
         res.status(500).json({ message: e });
     }
 });
+
+// update items (new update inventory) (also for setting items (inventory))
+userRouter.post("/updateItems", async (req,res) => {
+    Logger.shared.log("Update user items (the new inventory)");
+    try {
+        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'items', model:'Item', select:["typeId", "typeName"]}]);
+        if (!user.location.coordinates || user.location.coordinates == []){
+          throw "You need to enter your address first!";
+        }
+        let newTypeIds = req.body.typeIdList;//typeIdList includes ALL products a user has
+        let toRemove = [];
+        let existingTypeIds = [];
+        let newItemIds = [];
+        console.log("user items: ", user.items);
+        for (let item of user.items) {
+            existingTypeIds.push(item.typeId);
+            if (!newTypeIds.includes(item.typeId)){
+                toRemove.push(item._id);
+            } else {
+                newItemIds.push(item._id);
+            }
+        }
+        console.log(existingTypeIds, newTypeIds)
+        newTypeIds = newTypeIds.filter(typeId => !(existingTypeIds.includes(typeId)));
+        console.log(newTypeIds)
+        //delete those in toRemove
+        await Item.deleteMany({_id: {$in: toRemove}});
+        //create newTypeIds
+        const itemsToCreate = newTypeIds.map((tId) => {return {typeId: tId, location: user.location, user: user._id}});
+        console.log(itemsToCreate);
+        let newItems = await Item.create(itemsToCreate);
+        //update user.items
+        if (newItems){
+          for (let i = 0; i < newItems.length; i++){
+              newItemIds.push(newItems[i]._id);
+          }
+        }
+        await User.updateOne({_id: user._id}, {items: newItemIds});
+        res.status(200).json(newItemIds);
+        Logger.shared.log(`Items of user updated successfully!`);
+    } catch(e) {
+        Logger.shared.log(`ERROR in updating items: ${e}`);
+        res.status(500).json({message: e});
+    }
+})
 
 //get public profile
 userRouter.get("/user-profile/:id", async (req, res) => {
@@ -78,23 +123,10 @@ userRouter.get("/user-profile/:id", async (req, res) => {
     }
 });
 
-// get inventory
-userRouter.get("/user-inventory/:id", async (req, res) => {
-  Logger.shared.log(`Getting inventory of user with id ${req.params.id}`);
-    try {
-        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'desc', 'location']}]).orFail();
-        Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
-        res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings, picture: user.picture});//should address and mail be publicly accessible? No :)
-    } catch(e) {
-      Logger.shared.log(`Failed getting public user profile with id ${req.params.id}`, 1);
-        res.status(500).json({message: e});
-    }
-});
-
 // update user
 userRouter.put("/update", async (req, res) => {
     try {
-        const updatedUser = req.body.user;
+        let updatedUser = req.body.user;
 
         const user = await User.findOne({ uid: updatedUser.uid });
         Logger.shared.log(`Updating public user profile with id ${user._id}`);
@@ -119,6 +151,19 @@ userRouter.put("/update", async (req, res) => {
     } catch (e) {
         Logger.shared.log(`Updating user profile failed: ${e}`);
         res.status(500).json({ message: e });
+    }
+});
+
+// get inventory
+userRouter.get("/user-inventory/:id", async (req, res) => {
+  Logger.shared.log(`Getting inventory of user with id ${req.params.id}`);
+    try {
+        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'desc', 'location']}]).orFail();
+        Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
+        res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings, picture: user.picture});//should address and mail be publicly accessible? No :)
+    } catch(e) {
+      Logger.shared.log(`Failed getting public user profile with id ${req.params.id}`, 1);
+        res.status(500).json({message: e});
     }
 });
 
