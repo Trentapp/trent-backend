@@ -52,7 +52,7 @@ const getCoordinates = async (user) => {
 userRouter.post("/user", async (req, res) => {
   Logger.shared.log(`Getting private user profile`);
     try {
-        const user = await User.findOne({ uid: req.body.uid });
+        const user = await User.findOne({ uid: req.body.uid }).populate([{path:'items', model:'Item', select:["typeId", "typeName"]}]);
         if (user) {
           Logger.shared.log(`Successfully got private user profile with id ${user._id}`);
         } else {

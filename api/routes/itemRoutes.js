@@ -111,6 +111,8 @@ const items = [
 ];
 
 let reverse = {};
+let asdict = {}
 for (let i = 0; i < items.length; i++){
     reverse[items[i]] = i;
+    asdict[i] = items[i];
 }
