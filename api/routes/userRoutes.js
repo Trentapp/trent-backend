@@ -4,7 +4,6 @@ import multer from "multer"
 import NodeGeocoder from "node-geocoder"
 import fs from "fs"
 import User from "../models/User.js"
-import Product from "../models/Product.js"
 import Item from "../models/Item.js"
 
 import MangoPayClient from "../../MangoPayClient.js"
@@ -73,7 +72,7 @@ userRouter.post("/updateItems", async (req,res) => {
         if (!user.location.coordinates || user.location.coordinates == []){
           throw "You need to enter your address first!";
         }
-        let newTypeIds = req.body.typeIdList;//typeIdList includes ALL products a user has
+        let newTypeIds = req.body.typeIdList;//typeIdList includes exactly ALL items a user has
         let toRemove = [];
         let existingTypeIds = [];
         let newItemIds = [];
@@ -110,19 +109,6 @@ userRouter.post("/updateItems", async (req,res) => {
     }
 })
 
-//get public profile
-userRouter.get("/user-profile/:id", async (req, res) => {
-  Logger.shared.log(`Getting public user profile with id ${req.params.id}`);
-    try {
-        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'desc', 'location']}]).orFail();
-        Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
-        res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings, picture: user.picture});//should address and mail be publicly accessible? No :)
-    } catch(e) {
-      Logger.shared.log(`Failed getting public user profile with id ${req.params.id}`, 1);
-        res.status(500).json({message: e});
-    }
-});
-
 // update user
 userRouter.put("/update", async (req, res) => {
     try {
@@ -154,36 +140,21 @@ userRouter.put("/update", async (req, res) => {
     }
 });
 
-// get inventory
-userRouter.get("/user-inventory/:id", async (req, res) => {
-  Logger.shared.log(`Getting inventory of user with id ${req.params.id}`);
-    try {
-        const user = await User.findOne({_id: req.params.id}).populate([{path:'inventory', model:'Product', select:['name', 'prices', 'thumbnail', 'desc', 'location']}]).orFail();
-        Logger.shared.log(`Succssfully got public user profile with id ${req.params.id}`);
-        res.status(200).json({_id: user._id, name: user.name, inventory: user.inventory, rating: user.rating, numberOfRatings: user.numberOfRatings, picture: user.picture});//should address and mail be publicly accessible? No :)
-    } catch(e) {
-      Logger.shared.log(`Failed getting public user profile with id ${req.params.id}`, 1);
-        res.status(500).json({message: e});
-    }
-});
-
-userRouter.post("/delete", async (req, res) => { // does not really delete user, just products and sets deleted parameter
+userRouter.post("/delete", async (req, res) => { // does not really delete user, just empties inventory sets deleted attribute
   Logger.shared.log(`Deleting public user profile`);
     try {
         const user = await User.findOne({ uid: req.body.uid });
-        const userId = user._id;
-        await Product.deleteMany({ user: userId });//deletes all products of that user
-        // await User.deleteOne({ uid: req.body.uid });
-        await User.updateOne({_id: userId}, {deleted: true});
+        await Item.deleteMany({user: user._id});//not tested, but should work
+        await User.updateOne({_id: user._id}, {deleted: true, items: []});
         res.status(200).json({ message: "success" });
-        Logger.shared.log(`Successfully deleted user profile with id ${userId}`);
+        Logger.shared.log(`Successfully deleted user profile with id ${user._id}`);
     } catch (e) {
         Logger.shared.log(`Delting user failed: ${e}`);
         res.status(500).json({ message: e });
     }
 });
 
-userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (req,res) => { //first uploading all images and then one blob product (like json)
+userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (req,res) => {
   Logger.shared.log(`Uploading new profile picture started`)
     try {
         let body, thumbnail;

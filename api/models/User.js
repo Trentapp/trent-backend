@@ -1,6 +1,17 @@
 import mongoose from "mongoose"
-import {AddressSchema} from "./Product.js"
-import {ImageSchema} from "./Product.js"
+
+
+export const AddressSchema = mongoose.Schema({
+  streetWithNr: String,
+  zipcode: String,
+  city: String,
+  country: String
+});
+
+export const ImageSchema = mongoose.Schema({
+  data: Buffer,
+  contentType: String,
+});
 
 const UserSchema = mongoose.Schema({ //to be extended
     uid: {
@@ -26,10 +37,7 @@ const UserSchema = mongoose.Schema({ //to be extended
       type: { type: String },
       coordinates: []
     },
-    items: [{type: mongoose.Schema.Types.ObjectId, ref: "Items"}],
-    // inventory: [{type: mongoose.Schema.Types.ObjectId, ref: "Products"}],
-    // transactionsLender: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
-    // transactionsBorrower: [{type: mongoose.Schema.Types.ObjectId, ref: "Transaction"}],
+    items: [{type: mongoose.Schema.Types.ObjectId, ref: "Items"}],//this is the inventory
     rating: Number,
     numberOfRatings: Number, //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
     picture: ImageSchema,
