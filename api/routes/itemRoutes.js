@@ -9,13 +9,15 @@ const itemsRouter = express.Router();
 
 // get items by location // maybe add authentication by userId later, so hackers cannot find the address of a user, but for now it should be fine
 itemsRouter.post("/getByTypeAndLocation", async (req,res) => {
-    Logger.shared.log(`Getting items of typeId ${req.body.typeId} around location ${req.body.location}`); //location.coordinates should equal [lng, lat]
+    Logger.shared.log(`Getting items of typeId ${req.body.typeId} around location ${req.body?.location}`); //location.coordinates should equal [lng, lat]
     const maxDistance = req.body.maxDistance ?? 4/6371; //default radius is 4km
     try {
-        const items = Item.find({$and: [{typeId: req.body.typeId}, {location: {$geoWithin: { $centerSphere: [location.coordinates, maxDistance]}}}]});
+        const items = await Item.find({$and: [{typeId: req.body.typeId}, {location: {$geoWithin: { $centerSphere: [req.body.location.coordinates, maxDistance]}}}]});//later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
+        Logger.shared.log(`Successfully got items.`);
         res.status(200).json(items);
     } catch(e){
         Logger.shared.log(`Failed getting items: ${e}`);
+        res.status(500).json({message: e});
     }
 });
 
