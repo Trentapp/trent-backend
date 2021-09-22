@@ -26,13 +26,14 @@ postsRouter.post("/create", async (req, res) => {
 });
 
 // get recent Posts around specific location
+// TODO: get the most recent X posts
 postsRouter.post("/getAroundLocation", async (req,res) => {
     Logger.shared.log(`Getting posts around location ${req.body?.location}`); //location.coordinates should equal [lng, lat]
-    const maxDistance = req.body.maxDistance ?? 4/6371; //default radius is 4km
+    const maxDistance = req.body.maxDistance/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
     try {
-        const posts = await Post.find({location: {$geoWithin: { $centerSphere: [req.body.location.coordinates, maxDistance]}}}).populate([{path: 'user', model: 'User', select: ['name', 'mail', 'address', 'location']}]);//later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
+        const posts = await Post.find({location: {$geoWithin: { $centerSphere: [req.body.location.coordinates, maxDistance]}}}).populate([{path: 'user', model: 'User', select: ['name', 'mail', 'address', 'location']}]);// maybe populate picture later, though I may not be able to send it as JSON //later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
         Logger.shared.log(`Successfully got posts.`);
-        res.status(200).json(items);
+        res.status(200).json(posts);
     } catch(e){
         Logger.shared.log(`Failed getting posts: ${e}`);
         res.status(500).json({message: e});
