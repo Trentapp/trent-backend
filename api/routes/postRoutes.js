@@ -31,14 +31,31 @@ postsRouter.post("/getAroundLocation", async (req,res) => {
     Logger.shared.log(`Getting posts around location ${req.body?.location}`); //location.coordinates should equal [lng, lat]
     const maxDistance = req.body.maxDistance/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
     try {
-        const posts = await Post.find({location: {$geoWithin: { $centerSphere: [req.body.location.coordinates, maxDistance]}}}).populate([{path: 'user', model: 'User', select: ['name', 'mail', 'address', 'location']}]);// maybe populate picture later, though I may not be able to send it as JSON //later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
+        const posts = await Post.find({location: {$geoWithin: { $centerSphere: [req.body.location.coordinates, maxDistance]}}}).populate([{path: 'user', model: 'User', select: ['name', 'mail', 'address', 'location', 'picture']}]);//later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
         Logger.shared.log(`Successfully got posts.`);
-        res.status(200).json(posts);
+        res.status(200).send(posts);// I hope send works as json
     } catch(e){
         Logger.shared.log(`Failed getting posts: ${e}`);
         res.status(500).json({message: e});
     }
 });
+
+postsRouter.put("/setStatus/:id", async (req,res) => {
+    Logger.shared.log(`Setting status of post ${req.params.id}`);
+    try {
+        const user = await User.findOne({uid: req.body.uid});
+        const post = await Post.findOne({_id: req.params.id}).populate([{path: "user", model: "User", select: []}]);
+        if (JSON.stringify(user._id) == JSON.stringify(post.user._id) && [0,1,2].includes(req.body.status)){
+            await Post.updateOne({_id: req.params.id}, {status: req.body.status});
+        } else {
+            throw "User does not have permission, or new status is invalid (not 0,1 or 2)";
+        }
+        res.status(200).json({message: "success"})
+    } catch(e) {
+        Logger.shared.log(`Failed to update status: ${e}`);
+        res.status(500).json({message: e});
+    }
+})
 
 
 export default postsRouter;
