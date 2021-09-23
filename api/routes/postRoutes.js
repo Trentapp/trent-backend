@@ -4,9 +4,10 @@ import Logger from "../../Logger.js"
 
 import Post from "../models/Post.js"
 import User from "../models/User.js"
-import Item from "../models/Item.js"
-// import User from "../models/User.js"
-
+import {getUsersByTypesAndLocation} from "./userRoutes.js";
+import PushNotificationHandler from "../../PushNotificationHandler.js" // pushNotifications are to be implemented!!!
+import { transporter, callbackSendMail } from "../mail.js"
+import {items} from "./itemRoutes.js";
 const postsRouter = express.Router();
 
 // create a post
@@ -17,16 +18,31 @@ postsRouter.post("/create", async (req, res) => {
         // for ad-hoc product searches, the user should just pass in a typeId like 9999, so no other id matches with it
         const post = {typeIds: req.body.typeIds, comment: req.body.comment, user: user._id, location: req.body.location, timestamp: new Date(), status: 0};
         let newPost = await Post.create(post);
+        let users = await getUsersByTypesAndLocation(req.body.typeIds, req.body.location);
+        for (let i = 0; i < users.length; i++) {
+            const recipient = users[i];
+            if (recipient._id == user._id){
+                continue;
+            }
+            const mailoptions = { // German version
+                from: "info@trentapp.com",
+                to: recipient.mail,
+                subject: `Trent-Anfrage: ${user.name} aus deiner Nähe möchte einen oder mehrere Gegenstände die du hast ausleihen`,
+                text: `Hallo ${recipient.name},\n${user.name} benötigt einen oder mehrere Gegenstände und braucht deshalb deine Hilfe. Du bist einer von wenigen Trent-Nutzern (wenn nicht der Einzige) in der Umgebung von ${user.name}, der die Gegenstände, die ${user.name} braucht, besitzt.\n ${user.name} braucht folgende Gegenstände: ${req.body.typeIds.map(tId => items[tId]).join(", ")}\nDazu schreibt er/sie: ${req.body.comment}\nBitte logge dich auf trentapp.com ein und kontaktiere ${user.name}.\nVielen Dank für deine Unterstützung! Menschen wie dir helfen dabei, dass weniger überproduziert wird und weniger Müll erzeugt wird.\nBeste Grüße\nDas Trent Team`, // should we send the email address of the borrower?
+            };
+            transporter.sendMail(mailoptions, callbackSendMail);
+            //TODO: push notifications
+        }
         Logger.shared.log(`Successfully created new post`);
         res.status(200).json(newPost);
     } catch (e) {
-        Logger.shared.log(`Creating new post failed`, 1);
+        Logger.shared.log(`Creating new post failed: ${e}`, 1);
         res.status(500).json({ message: e });
     }
 });
 
 // get recent Posts around specific location
-// TODO: get the most recent X posts
+// TODO: maybe filter for status:0 (active/open requests)
 postsRouter.post("/getAroundLocation", async (req,res) => {
     Logger.shared.log(`Getting posts around location ${req.body?.location}`); //location.coordinates should equal [lng, lat]
     const maxDistance = req.body.maxDistance/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km

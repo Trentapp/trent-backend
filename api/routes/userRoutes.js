@@ -219,4 +219,25 @@ userRouter.post("/addAPNToken", async (req, res) => {
     }
 });
 
+// get users to send pushnotifications to (by surrounding area and typeIds)
+export const getUsersByTypesAndLocation = async (typeIds, location, maxDist=4) => {
+  Logger.shared.log(`Getting users with items of typeIds ${typeIds} around location ${location}`); //location.coordinates should equal [lng, lat]
+  const maxDistance = maxDist/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
+  try {
+      typeIds = typeIds.filter(tId => tId != 9999);//"Sonstige" should obviously not be required
+      if (typeIds.length == 0){
+        return [];//otherwise it would write everyone
+      }
+      let users = await User.find({location: {$geoWithin: { $centerSphere: [location.coordinates, maxDistance]}}}).populate([{path: "items", model: "Item", select: ["typeId"]}]); //later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
+      users = users.filter(u => typeIds.every(tId => u.items.map(it => it.typeId).includes(tId)));
+      Logger.shared.log(`Successfully got users.`);
+      return users;
+  } catch(e){
+      Logger.shared.log(`Failed getting users: ${e}`);
+      return {message: e};
+  }
+}
+userRouter.post("/getByTypesAndLocation", (req,res) => res.send(getUsersByTypesAndLocation(req.body.typeIds, req.body.location))); // not sure if that works, at least the status code is probably wrong, but actually the request is not really needed (rather testing purposes)
+
+
 export default userRouter;

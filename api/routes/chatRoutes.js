@@ -57,7 +57,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 			subject: `Neue Nachricht von ${senderName} auf Trent.`,
 			text: `Link zum Chat: trentapp.com/chats/${chat._id} \n\n${senderName} schreibt: ${req.body.content}`
 		};
-		// transporter.sendMail(mailoptions, callbackSendMail);
+		transporter.sendMail(mailoptions, callbackSendMail);
 		Logger.shared.log(`Successfully sent message.`);
 		res.status(200).json({ status: "success", chatId: chat._id });
 	} catch (e) {
