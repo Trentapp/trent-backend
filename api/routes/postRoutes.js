@@ -40,6 +40,18 @@ postsRouter.post("/getAroundLocation", async (req,res) => {
     }
 });
 
+// get specific post
+postsRouter.get("/post/:id", async (req,res) => {
+    Logger.shared.log(`Getting post ${req.params.id}}`); //location.coordinates should equal [lng, lat]
+    try {
+        const post = await Post.findOne({_id: req.params.id});
+        Logger.shared.log(`Successfully got post.`);
+        res.status(200).send(post);// I hope send works as json
+    } catch(e){
+        Logger.shared.log(`Failed to get post: ${e}`);
+        res.status(500).json({message: e});
+    }
+});
 postsRouter.put("/setStatus/:id", async (req,res) => {
     Logger.shared.log(`Setting status of post ${req.params.id}`);
     try {
@@ -55,7 +67,26 @@ postsRouter.put("/setStatus/:id", async (req,res) => {
         Logger.shared.log(`Failed to update status: ${e}`);
         res.status(500).json({message: e});
     }
-})
+});
 
+// update a post
+postsRouter.put("/update/:id", async (req, res) => {
+    Logger.shared.log(`Updating post ${req.params.id}`);
+    try {
+        const user = await User.findOne({uid: req.body.uid});
+        const post = await Post.findOne({_id: req.params.id}).populate([{path: "user", model: "User", select: []}]);
+        let newPost;
+        if (JSON.stringify(post.user._id) == JSON.stringify(user._id)) {
+            newPost = await Post.updateOne({_id: req.params.id}, {typeIds: req.body.typeIds, comment: req.body.comment, location: req.body.location, timestamp: new Date()});//should I exclude timestamp?
+        } else {
+            throw "Permission denied";
+        }        
+        Logger.shared.log(`Successfully updated post`);
+        res.status(200).json(newPost);
+    } catch (e) {
+        Logger.shared.log(`Updating post failed`, 1);
+        res.status(500).json({ message: e });
+    }
+});
 
 export default postsRouter;
