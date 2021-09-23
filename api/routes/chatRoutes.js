@@ -1,6 +1,5 @@
 import express from "express"
 import User from "../models/User.js"
-import Product from "../models/Product.js"
 import Chat from "../models/Chat.js"
 
 import Logger from "../../Logger.js"
@@ -14,7 +13,7 @@ const chatRouter = express.Router();
 // sendmessage was completely changed, you now only need uid, recipientId, and content
 chatRouter.post("/sendMessage", async (req, res) => {
 	try {
-		Logger.shared.log(`Sending new message from ${req.body.senderId} to ${req.body.recipientId}`);
+		Logger.shared.log(`Sending new message from some user to ${req.body.recipientId}`);
 		if (!req.body.uid || !req.body.recipientId || !req.body.content) { Logger.shared.log(`Parameters messing for sending message for chatId: ${req.body.chatId} concering product: ${req.body.productId}`, 1); throw "Missing parameters"; }
 
 		const user = await User.findOne({ uid: req.body.uid });
@@ -37,7 +36,8 @@ chatRouter.post("/sendMessage", async (req, res) => {
 		}
 		else {
 			// not sure if populate works on create
-			chat = await Chat.create({personA: user._id, personB: req.body.recipientId, messages: [message]}).populate([{path: 'personA', model: "User", select: ['name', 'mail', 'apnTokens']}, {path: 'personB', model: "User", select: ['name', 'mail', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
+			chat = await Chat.create({personA: user._id, personB: req.body.recipientId, messages: [message]});
+			chat = await chat.populate([{path: 'personA', model: "User", select: ['name', 'mail', 'apnTokens']}, {path: 'personB', model: "User", select: ['name', 'mail', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name']}]);
 		}
 		if (JSON.stringify(user._id) == JSON.stringify(chat.personA._id)) {
 			recipientTokens = chat.personB.apnTokens;
@@ -57,7 +57,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 			subject: `Neue Nachricht von ${senderName} auf Trent.`,
 			text: `Link zum Chat: trentapp.com/chats/${chat._id} \n\n${senderName} schreibt: ${req.body.content}`
 		};
-		transporter.sendMail(mailoptions, callbackSendMail);
+		// transporter.sendMail(mailoptions, callbackSendMail);
 		Logger.shared.log(`Successfully sent message.`);
 		res.status(200).json({ status: "success", chatId: chat._id });
 	} catch (e) {
@@ -108,7 +108,7 @@ chatRouter.post("/chat/:id", async (req,res) => {
 	}
 })
 
-// get chats of specific user with new messages
+// get chats of specific user with new messages // new version (Person2Person) is not tested yet (at least as long it does not work in frontend xD)
 chatRouter.post("/getNewMessages", async (req, res) => {
 	Logger.shared.log(`Getting chats using /chats/get`);
 	try {
