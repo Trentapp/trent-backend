@@ -14,8 +14,8 @@ postsRouter.post("/create", async (req, res) => {
     Logger.shared.log(`Creating new post`);
     try {
         const user = await User.findOne({uid: req.body.uid});
-        // for ad-hoc product searches, the user should just pass in a typeID like 9999, so no other id matches with it
-        const post = {typeId: req.body.typeId, desc: req.body.desc, user: user._id, location: req.body.location, timestamp: new Date()};
+        // for ad-hoc product searches, the user should just pass in a typeId like 9999, so no other id matches with it
+        const post = {typeIds: req.body.typeIds, comment: req.body.comment, user: user._id, location: req.body.location, timestamp: new Date(), status: 0};
         let newPost = await Post.create(post);
         Logger.shared.log(`Successfully created new post`);
         res.status(200).json(newPost);
