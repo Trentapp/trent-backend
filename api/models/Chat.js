@@ -21,19 +21,14 @@ export const MessageSchema = mongoose.Schema({
 });
 
 const ChatSchema = mongoose.Schema({
-	lender: {
+	personA: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',
 		required: true
 	},
-	borrower: {
+	personB: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',
-		required: true
-	},
-	product:{
-		type: mongoose.Schema.Types.ObjectId,
-		ref: 'Product',
 		required: true
 	},
 	messages: [MessageSchema]
