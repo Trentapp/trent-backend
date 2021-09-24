@@ -48,10 +48,7 @@ postsRouter.post("/getAroundLocation", async (req,res) => {
     const maxDistance = req.body.maxDistance/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
     const numPosts = req.body.numPosts ?? 10; // maybe add pagination (with .skip) later to make sth like "Load more" possible
     try {
-        let posts = await Post.find({location: {$geoWithin: { $centerSphere: [req.body.location.coordinates, maxDistance]}}})
-        if (posts.length > 0){
-            posts = await posts.sort([['timestamp', -1]]).limit(numPosts).populate([{path: 'user', model: 'User', select: ['name', 'mail', 'address', 'location', 'picture']}]);//later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
-        }
+        let posts = await Post.find({location: {$geoWithin: { $centerSphere: [req.body.location.coordinates, maxDistance]}}}).sort([['timestamp', -1]]).limit(numPosts).populate([{path: 'user', model: 'User', select: ['name', 'mail', 'address', 'location', 'picture']}]);//later optimize to find the nearest (maybe combined with greater geowithin); do it with manual calculations if $near does not work
         Logger.shared.log(`Successfully got posts.`);
         res.status(200).send(posts);// I hope send works as json
     } catch(e){
