@@ -106,4 +106,23 @@ postsRouter.put("/update/:id", async (req, res) => {
     }
 });
 
+postsRouter.post("/delete/:id", async (req, res) => {
+    Logger.shared.log(`Deleting post ${req.params.id}`);
+    try {
+        const user = await User.findOne({uid: req.body.uid});
+        const post = await Post.findOne({_id: req.params.id}).populate([{path: "user", model: "User", select: []}]);
+        if (JSON.stringify(user._id) == JSON.stringify(post.user._id)){
+            await Post.deleteOne({_id: req.params.id});
+        } else {
+            throw "Permission denied";
+        }
+        Logger.shared.log(`Successfully deleted post`);
+        res.status(200).json({message: "success"});
+    } catch (e) {
+        Logger.shared.log(`Deleting post failed`, 1);
+        res.status(500).json({ message: e });
+    }
+})
+
+
 export default postsRouter;
