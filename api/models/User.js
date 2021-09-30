@@ -34,7 +34,7 @@ const UserSchema = mongoose.Schema({ //to be extended
     address: AddressSchema,
     location: {
       type: { type: String },// the type of location is set to "Point", which is important for some location queries
-      coordinates: [] // [longitude, latitude]
+      coordinates: [Number] // [longitude, latitude]
     },
     items: [{type: mongoose.Schema.Types.ObjectId, ref: "Items"}],//this is the inventory
     rating: Number,

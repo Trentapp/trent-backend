@@ -5,7 +5,7 @@ const ItemSchema = mongoose.Schema({
     typeName: String, //not currently used, but could contain sth like "Bierbänke und Tische" or some shorter tag that is still readable "Bb&T"
     location: {
         type: { type: String },
-        coordinates: []
+        coordinates: [Number]
     },
     user: { // owner
         type: mongoose.Schema.Types.ObjectId,
