@@ -226,7 +226,7 @@ userRouter.post("/addAPNToken", async (req, res) => {
 });
 
 // get users to send notifications to when a post is created (by surrounding area and typeIds)
-export const getUsersByTypesAndLocation = async (typeIds, location, maxDist=4) => {
+export const getUsersByTypesAndLocation = async (typeIds, location, maxDist=4) => { // this is called from postRoutes.js when a post is created
   Logger.shared.log(`Getting users with items of typeIds ${typeIds} around location ${location}`); //location.coordinates should equal [lng, lat]
   const maxDistance = maxDist/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
   try {
