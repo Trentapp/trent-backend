@@ -27,7 +27,7 @@ general prefix: /api
     - /chat/:id : get specific chat
     - /getNewMessages : get all chats of a user with messages the user has not read yet
     
-
+you often get a response from the routes. The thing you actually want is most likely response.data .
 
 
 

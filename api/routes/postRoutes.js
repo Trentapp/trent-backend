@@ -28,7 +28,7 @@ postsRouter.post("/create", async (req, res) => { // req.body: {uid, comment, ty
                 from: "info@trentapp.com",
                 to: recipient.mail,
                 subject: `Trent-Anfrage: ${user.name} aus deiner Nähe möchte einen oder mehrere Gegenstände die du hast ausleihen`,
-                text: `Hallo ${recipient.name},\n${user.name} benötigt einen oder mehrere Gegenstände und braucht deshalb deine Hilfe. Du bist einer von wenigen Trent-Nutzern (wenn nicht der Einzige) in der Umgebung von ${user.name}, der die Gegenstände, die ${user.name} braucht, besitzt.\n ${user.name} braucht folgende Gegenstände: ${req.body.typeIds.map(tId => items[tId]).join(", ")}\nDazu schreibt er/sie: ${req.body.comment}\nBitte logge dich auf trentapp.com ein und kontaktiere ${user.name}.\nVielen Dank für deine Unterstützung! Menschen wie dir helfen dabei, dass weniger überproduziert wird und weniger Müll erzeugt wird.\nBeste Grüße\nDas Trent Team`, // should we send the email address of the borrower?
+                text: `Hallo ${recipient.name},\n\n${user.name} benötigt einen oder mehrere Gegenstände und braucht deshalb deine Hilfe. Du bist einer von wenigen Trent-Nutzern (wenn nicht der Einzige) in der Umgebung von ${user.name}, der die Gegenstände, die ${user.name} braucht, besitzt.\n\n ${user.name} braucht folgende Gegenstände: ${req.body.typeIds.map(tId => items[tId]).join(", ")}\n\nDazu schreibt er/sie: ${req.body.comment}\n\nBitte melde dich bei ${user.name}: https://trentapp.com/post/${post._id}?msgType=Yes \n\nVielen Dank für deine Unterstützung! Menschen wie dir helfen dabei, dass weniger überproduziert wird und weniger Müll erzeugt wird.\n\nBeste Grüße\n\nDas Trent Team`, // should we send the email address of the borrower?
             };
             transporter.sendMail(mailoptions, callbackSendMail);
             //TODO: push notifications
@@ -62,7 +62,7 @@ postsRouter.post("/getAroundLocation", async (req,res) => { //req.body: {loactio
 postsRouter.get("/post/:id", async (req,res) => {//just postId in params obviously
     Logger.shared.log(`Getting post ${req.params.id}}`);
     try {
-        const post = await Post.findOne({_id: req.params.id});
+        const post = await Post.findOne({_id: req.params.id}).populate([{path: "user", model: "User", select: ["name"]}]);
         Logger.shared.log(`Successfully got post.`);
         res.status(200).send(post);// I hope send works as json
     } catch(e){
