@@ -31,18 +31,17 @@ const UserSchema = mongoose.Schema({ //to be extended
       }
     },
     mail: String,//I would use email instead of mail
-    //picture: String,
     address: AddressSchema,
     location: {
-      type: { type: String },
-      coordinates: []
+      type: { type: String },// the type of location is set to "Point", which is important for some location queries
+      coordinates: [] // [longitude, latitude]
     },
     items: [{type: mongoose.Schema.Types.ObjectId, ref: "Items"}],//this is the inventory
     rating: Number,
     numberOfRatings: Number, //I think always updating rating and numberOfRatings as we currently do is dangerous in the case of some errors. We should rather establish a relation or so (reviews reference)
     picture: ImageSchema,
-    apnTokens: [String],
-    mangopayId: String,
+    apnTokens: [String],//this is for push-notifications
+    mangopayId: String,//this and the following two are for payment (not used yet)
     walletId: String,
     bankaccountId: String,
     deleted: {

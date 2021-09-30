@@ -11,7 +11,7 @@ import {items} from "./itemRoutes.js";
 const postsRouter = express.Router();
 
 // create a post
-postsRouter.post("/create", async (req, res) => {
+postsRouter.post("/create", async (req, res) => { // req.body: {uid, comment, typeIds, location: {type, coordinates: [lng, lat]}}
     Logger.shared.log(`Creating new post`);
     try {
         const user = await User.findOne({uid: req.body.uid});
@@ -43,7 +43,8 @@ postsRouter.post("/create", async (req, res) => {
 
 // get recent Posts around specific location
 // TODO: maybe filter for status:0 (active/open requests)
-postsRouter.post("/getAroundLocation", async (req,res) => {
+// TODO: implement pagination with req.body.page and .skip()
+postsRouter.post("/getAroundLocation", async (req,res) => { //req.body: {loaction: {type, coordinates}}
     Logger.shared.log(`Getting posts around location ${req.body?.location}`); //location.coordinates should equal [lng, lat]
     const maxDistance = req.body.maxDistance/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
     const numPosts = req.body.numPosts ?? 10; // maybe add pagination (with .skip) later to make sth like "Load more" possible
@@ -58,8 +59,8 @@ postsRouter.post("/getAroundLocation", async (req,res) => {
 });
 
 // get specific post
-postsRouter.get("/post/:id", async (req,res) => {
-    Logger.shared.log(`Getting post ${req.params.id}}`); //location.coordinates should equal [lng, lat]
+postsRouter.get("/post/:id", async (req,res) => {//just postId in params obviously
+    Logger.shared.log(`Getting post ${req.params.id}}`);
     try {
         const post = await Post.findOne({_id: req.params.id});
         Logger.shared.log(`Successfully got post.`);
@@ -69,7 +70,9 @@ postsRouter.get("/post/:id", async (req,res) => {
         res.status(500).json({message: e});
     }
 });
-postsRouter.put("/setStatus/:id", async (req,res) => {
+
+postsRouter.put("/setStatus/:id", async (req,res) => {//postId in params; req.body: {uid, status}
+    //status 0: active/still searching; status 1: closed (found a lender); status 2: closed (found nobody but don't need it anymore)
     Logger.shared.log(`Setting status of post ${req.params.id}`);
     try {
         const user = await User.findOne({uid: req.body.uid});
@@ -87,7 +90,7 @@ postsRouter.put("/setStatus/:id", async (req,res) => {
 });
 
 // update a post
-postsRouter.put("/update/:id", async (req, res) => {
+postsRouter.put("/update/:id", async (req, res) => {// postId in params; req.body: {uid, comment, typeIds, location: {type, coordinates: [lng, lat]}}
     Logger.shared.log(`Updating post ${req.params.id}`);
     try {
         const user = await User.findOne({uid: req.body.uid});
@@ -106,7 +109,7 @@ postsRouter.put("/update/:id", async (req, res) => {
     }
 });
 
-postsRouter.post("/delete/:id", async (req, res) => {
+postsRouter.post("/delete/:id", async (req, res) => { //postId in params, req.body: {uid}
     Logger.shared.log(`Deleting post ${req.params.id}`);
     try {
         const user = await User.findOne({uid: req.body.uid});

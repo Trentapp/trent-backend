@@ -22,7 +22,7 @@ const userRouter = express.Router();
 // every route here has the prefix /api/users
 
 // create user profile
-userRouter.post("/create", async (req, res) => {
+userRouter.post("/create", async (req, res) => { // req.body should be: {user: {firstName: firstname, lastName: lastname, mail: email, uid: uid_you_get_from_firebase}} // alternatively just name instead of first- and lastname
   Logger.shared.log(`Creating new user`);
     try {
         let user = req.body.user; //I would submit the user data in the request directly, so the new req.body is the old req.body.user
@@ -35,8 +35,8 @@ userRouter.post("/create", async (req, res) => {
     }
 });
 
+//extract the geocoordinates from address and add it to user
 const getCoordinates = async (user) => {
-  //extract the geocoordinates from address and add it to user
   try {
       const responseLoc = await geocoder.geocode(`${user.address.streetWithNr}, ${user.address.zipcode} ${user.address.city}, ${user.address.country}`); //may not need to be that detailed
       user['location.coordinates'] = [responseLoc[0].longitude, responseLoc[0].latitude];
@@ -48,7 +48,7 @@ const getCoordinates = async (user) => {
 };
 
 // get private profile
-userRouter.post("/user", async (req, res) => {
+userRouter.post("/user", async (req, res) => { //req.body: {uid: uid}
   Logger.shared.log(`Getting private user profile`);
     try {
         const user = await User.findOne({ uid: req.body.uid }).populate([{path:'items', model:'Item', select:["typeId", "typeName"]}]);
@@ -65,7 +65,7 @@ userRouter.post("/user", async (req, res) => {
 });
 
 // update items (new update inventory) (also for setting items (inventory))
-userRouter.post("/updateItems", async (req,res) => {
+userRouter.post("/updateItems", async (req,res) => { //req.body: {uid: uid, typeIdList: [id1, id2, ...]} wobei id1, id2... die TypeIds von den Produkten sind, die der User im Inventory angeklickt hat (siehe typeIds unten in itemRoutes.js)
     Logger.shared.log("Update user items (the new inventory)");
     try {
         const user = await User.findOne({ uid: req.body.uid }).populate([{path:'items', model:'Item', select:["typeId", "typeName"]}]);
@@ -110,7 +110,7 @@ userRouter.post("/updateItems", async (req,res) => {
 })
 
 // update user
-userRouter.put("/update", async (req, res) => {
+userRouter.put("/update", async (req, res) => { // req.body should include {user: the_currently_existing_user_that_you_should_query_before_updating} (but without picture)
     try {
         let updatedUser = req.body.user;
 
@@ -118,9 +118,7 @@ userRouter.put("/update", async (req, res) => {
         Logger.shared.log(`Updating public user profile with id ${user._id}`);
 
         updatedUser["_id"] = user._id;
-        updatedUser["inventory"] = user.inventory;
-        updatedUser["transactionsLender"] = user.transactionsLender;
-        updatedUser["transactionsBorrower"] = user.transactionsBorrower;
+        updatedUser["items"] = user.items;
         updatedUser["mail"] = user.mail;
         updatedUser["picture"] = user.picture;
 
@@ -140,7 +138,7 @@ userRouter.put("/update", async (req, res) => {
     }
 });
 
-userRouter.post("/delete", async (req, res) => { // does not really delete user, just empties inventory sets deleted attribute
+userRouter.post("/delete", async (req, res) => { // req.body: {uid: uid} // does not really delete user, just empties inventory sets deleted attribute
   Logger.shared.log(`Deleting public user profile`);
     try {
         const user = await User.findOne({ uid: req.body.uid });
@@ -154,7 +152,14 @@ userRouter.post("/delete", async (req, res) => { // does not really delete user,
     }
 });
 
+// uploading or changing profile picture
 userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (req,res) => {
+  /** the header of this request is "multipart/form-data"
+   * the form-data has two fields:
+   * one with name "image" and value the image file
+   * one with name "parameters" and value {uid: uid} (sent not simply as string, but as Object/Blob)
+   * this is probably not precisie enough, so just contact me (Simon) 
+   */
   Logger.shared.log(`Uploading new profile picture started`)
     try {
         let body, thumbnail;
@@ -176,7 +181,7 @@ userRouter.post("/uploadPicture", upload.any(), upload.single("body"), async (re
     }
 });
 
-userRouter.post("/deleteProfilePicture", async (req, res) => {
+userRouter.post("/deleteProfilePicture", async (req, res) => { //req.body: {uid: uid}
   Logger.shared.log("Deleting profile picture");
   try {
     await User.updateOne({uid : req.body.uid}, {$unset : {picture:""}});
@@ -188,6 +193,7 @@ userRouter.post("/deleteProfilePicture", async (req, res) => {
   }
 });
 
+// takes picture, crops out everything but the biggest possible square within the picture in the middle, and resizes it to 200x200 resolution
 const convertPicture = async (file) => new Promise(resolve => {
   sharp(file.path)
   .metadata()
@@ -219,7 +225,7 @@ userRouter.post("/addAPNToken", async (req, res) => {
     }
 });
 
-// get users to send pushnotifications to (by surrounding area and typeIds)
+// get users to send notifications to when a post is created (by surrounding area and typeIds)
 export const getUsersByTypesAndLocation = async (typeIds, location, maxDist=4) => {
   Logger.shared.log(`Getting users with items of typeIds ${typeIds} around location ${location}`); //location.coordinates should equal [lng, lat]
   const maxDistance = maxDist/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
@@ -237,6 +243,8 @@ export const getUsersByTypesAndLocation = async (typeIds, location, maxDist=4) =
       return {message: e};
   }
 }
+
+// route to get the users to send notifications to, though it is currently not needed
 userRouter.post("/getByTypesAndLocation", (req,res) => res.send(getUsersByTypesAndLocation(req.body.typeIds, req.body.location))); // not sure if that works, at least the status code is probably wrong, but actually the request is not really needed (rather testing purposes)
 
 

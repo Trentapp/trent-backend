@@ -13,9 +13,10 @@ const router = express.Router();
 router.use("/items", itemsRouter);
 router.use("/posts", postsRouter);
 router.use("/users", userRouter);
-router.use("/reviews", reviewRouter);
 // router.use("/transactions", transactionRouter);
 router.use("/chats", chatRouter);
+// currently not used yet (only in development and testing):
+router.use("/reviews", reviewRouter);
 router.use("/payment", paymentRouter);
 
 export default router;

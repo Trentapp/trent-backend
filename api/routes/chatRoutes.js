@@ -11,7 +11,7 @@ const chatRouter = express.Router();
 //every route here with prefix /api/chats
 
 // sendmessage was completely changed, you now only need uid, recipientId, and content
-chatRouter.post("/sendMessage", async (req, res) => {
+chatRouter.post("/sendMessage", async (req, res) => { //req.body: {uid, recipientId, content} //recipientId is user._id of the recipient
 	try {
 		Logger.shared.log(`Sending new message from some user to ${req.body.recipientId}`);
 		if (!req.body.uid || !req.body.recipientId || !req.body.content) { Logger.shared.log(`Parameters messing for sending message for chatId: ${req.body.chatId} concering product: ${req.body.productId}`, 1); throw "Missing parameters"; }
@@ -67,7 +67,7 @@ chatRouter.post("/sendMessage", async (req, res) => {
 });
 
 
-chatRouter.post("/getChatsOfUser", async (req, res) => {
+chatRouter.post("/getChatsOfUser", async (req, res) => { // req.body: {uid}
 	Logger.shared.log(`Getting chats using /chats/get`);
 	try {
 		if (!req.body.uid) { throw "Missing parameters"; }
@@ -86,7 +86,7 @@ chatRouter.post("/getChatsOfUser", async (req, res) => {
 	}
 });
 
-chatRouter.post("/chat/:id", async (req,res) => {
+chatRouter.post("/chat/:id", async (req,res) => { // chatId in params; req.body: {uid}
 	Logger.shared.log(`Getting chat with id: ${req.params.id}`);
 	try {
 		const user = await User.findOne({uid: req.body.uid});
@@ -94,7 +94,7 @@ chatRouter.post("/chat/:id", async (req,res) => {
 		if (!user || (JSON.stringify(chat.personA._id) != JSON.stringify(user._id) && JSON.stringify(chat.personB._id) != JSON.stringify(user._id))){
 			throw "No access to chat!";
 		}
-		for (let i = 0; i < chat.messages.length; i++) {
+		for (let i = 0; i < chat.messages.length; i++) {//marking messages of the other user as read
 			if (JSON.stringify(chat.messages[i].sender._id) != JSON.stringify(user._id)) {
 				chat.messages[i].read = true;
 			}
@@ -108,8 +108,9 @@ chatRouter.post("/chat/:id", async (req,res) => {
 	}
 })
 
+// currently not used in webapp
 // get chats of specific user with new messages // new version (Person2Person) is not tested yet (at least as long it does not work in frontend xD)
-chatRouter.post("/getNewMessages", async (req, res) => {
+chatRouter.post("/getNewMessages", async (req, res) => { // req.body: {uid}
 	Logger.shared.log(`Getting chats using /chats/get`);
 	try {
 		if (!req.body.uid) { throw "Missing parameters"; }
@@ -119,6 +120,7 @@ chatRouter.post("/getNewMessages", async (req, res) => {
 		if (!userId) { Logger.shared.log(`Authentication for getting chats failed`, 1); throw "User uid not found"; }
 
 		const chats = await Chat.find({ $or: [{ personA: userId }, { personB: userId }] }).populate([{path: 'personA', model: "User", select: ['name', 'mail', 'apnTokens']}, {path: 'personB', model: "User", select: ['name', 'mail', 'apnTokens']}, {path:'messages.sender', model:'User', select: ['name', 'deleted']}]);
+		// filtering the chats that contain unread messages of that user
 		let newMsgChats = [];
 		for (let j = 0; j < chats.length; j++) {
 			const chat = chats[j];

@@ -7,8 +7,9 @@ import Item from "../models/Item.js"
 
 const itemsRouter = express.Router();
 
-// get items by location // maybe add authentication by userId later, so hackers cannot find the address of a user, but for now it should be fine
-itemsRouter.post("/getByTypeAndLocation", async (req,res) => {
+// get items by location // currently not in use
+// (minor issue: hackers can see locations and user of an item, so they can infer the address of a user (except if blocked by CORS, but it should not be blocked))
+itemsRouter.post("/getByTypeAndLocation", async (req,res) => { //req.body: {typeId, location: {type: "Point", coordinates: [long, lat]}}
     Logger.shared.log(`Getting items of typeId ${req.body.typeId} around location ${req.body?.location}`); //location.coordinates should equal [lng, lat]
     const maxDistance = req.body.maxDistance/6371 ?? 4/6371; //default radius is 4km // you can pass in maxDistance in unit km
     try {
