@@ -131,7 +131,7 @@ userRouter.put("/update", async (req, res) => { // req.body should include {user
         }
         if (updatedUser.address?.streetWithNr !== user.address?.streetWithNr || updatedUser.address?.zipcode !== user.address?.zipcode) {
           updatedUser = await getCoordinates(updatedUser);
-          await Item.updateMany({user: user._id}, {location: updatedUser.location});
+          await Item.updateMany({user: user._id}, {$set: {location: updatedUser.location}});
         }
 
         await User.replaceOne({ uid: req.body.user.uid }, updatedUser);// maybe change to updateOne later
