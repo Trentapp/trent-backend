@@ -39,7 +39,11 @@ userRouter.post("/create", async (req, res) => { // req.body should be: {user: {
 const getCoordinates = async (user) => {
   try {
       const responseLoc = await geocoder.geocode(`${user.address.streetWithNr}, ${user.address.zipcode} ${user.address.city}, ${user.address.country}`); //may not need to be that detailed
-      user['location.coordinates'] = [responseLoc[0].longitude, responseLoc[0].latitude];
+      if (responseLoc[0]){//responseLoc is an empty array if the address does not exist (or no rather similar address)
+        user['location.coordinates'] = [responseLoc[0].longitude, responseLoc[0].latitude];
+      } else {
+        user['location.coordinates'] = [];
+      }
       user['location.type'] = "Point";
       return user;
   } catch (e) {
@@ -125,8 +129,9 @@ userRouter.put("/update", async (req, res) => { // req.body should include {user
         if (updatedUser.firstName && updatedUser.lastName) {
           updatedUser["name"] = updatedUser.firstName + " " + updatedUser.lastName;
         }
-        if (updatedUser.address?.streetWithNr && updatedUser.address?.zipcode) {
+        if (updatedUser.address?.streetWithNr !== user.address?.streetWithNr || updatedUser.address?.zipcode !== user.address?.zipcode) {
           updatedUser = await getCoordinates(updatedUser);
+          await Item.updateMany({user: user._id}, {location: updatedUser.location});
         }
 
         await User.replaceOne({ uid: req.body.user.uid }, updatedUser);// maybe change to updateOne later
